@@ -43,6 +43,13 @@ Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
 
+## Local user data (never commit)
+settings.json
+
+## Symbols / leftovers
+*.pdb
+*.log
+
 ## Rider / VS Code / Cursor
 .idea/
 *.sln.iml

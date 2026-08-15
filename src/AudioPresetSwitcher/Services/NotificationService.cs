@@ -8,7 +8,7 @@ namespace AudioPresetSwitcher.Services;
 
 public sealed class NotificationService
 {
-    public const string AppUserModelId = "Gerrit.AudioPresetSwitcher";
+    public const string AppUserModelId = "AudioPresetSwitcher.Desktop";
 
     private readonly SettingsService _settings;
 
