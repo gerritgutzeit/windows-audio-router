@@ -18,7 +18,7 @@ Closing the window hides the app to the tray. Exit is only available from the si
 - Optional start with Windows
 - Installer and auto-updates via [Velopack](https://velopack.io/) (GitHub Releases)
 
-Devices are matched by a **keyword** against the current Windows `FriendlyName` (for example `Arctis Nova` or `Shure MV7`). That survives USB/Bluetooth reconnects, which change the internal device GUID.
+Devices are matched by a **keyword** against the current Windows `FriendlyName` (for example `Wireless Headset` or `Audio Interface XYZ`). That survives USB/Bluetooth reconnects, which change the internal device GUID.
 
 Applying a preset sets multimedia **and** communications defaults (Teams, Discord, and similar) to the same playback and recording devices.
 
