@@ -1,6 +1,5 @@
 using AudioPresetSwitcher.Models;
 using AudioPresetSwitcher.ViewModels.Pages;
-using AudioPresetSwitcher.Views.Pages;
 using AudioPresetSwitcher.Views.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -50,7 +49,6 @@ public sealed class ApplicationHostService(
             }
         }
 
-        window.Navigate(typeof(PresetsPage));
         if (options.ShowWindow)
         {
             windows.ShowDashboard();

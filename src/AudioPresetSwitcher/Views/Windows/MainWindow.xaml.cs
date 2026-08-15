@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using AudioPresetSwitcher.Services;
 using AudioPresetSwitcher.ViewModels.Windows;
+using AudioPresetSwitcher.Views.Pages;
 using Wpf.Ui;
 using Wpf.Ui.Abstractions;
 using Wpf.Ui.Appearance;
@@ -35,6 +36,15 @@ public partial class MainWindow : INavigationWindow
         navigationService.SetNavigationControl(RootNavigation);
         _snackbarService.SetSnackbarPresenter(SnackbarPresenter);
         _contentDialogService.SetDialogHost(RootContentDialog);
+
+        // Navigate only after the NavigationView template is applied; early Navigate NREs.
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoaded;
+        _ = Navigate(typeof(PresetsPage));
     }
 
     public MainWindowViewModel ViewModel { get; }
