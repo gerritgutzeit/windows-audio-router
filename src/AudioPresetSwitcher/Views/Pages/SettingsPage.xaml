@@ -66,7 +66,7 @@
                 </Grid>
             </ui:Card>
 
-            <ui:Card Padding="18">
+            <ui:Card Margin="0,0,0,12" Padding="18">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -85,6 +85,40 @@
                         IsChecked="{Binding ViewModel.ShowToastNotifications, Mode=TwoWay}"
                         OffContent="Off"
                         OnContent="On" />
+                </Grid>
+            </ui:Card>
+
+            <ui:Card Padding="18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock FontWeight="SemiBold" Text="Updates" />
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            Opacity="0.72"
+                            Text="{Binding ViewModel.VersionText}" />
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            Opacity="0.72"
+                            Text="{Binding ViewModel.UpdateStatusText}" />
+                    </StackPanel>
+                    <StackPanel
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <ui:Button
+                            Margin="0,0,8,0"
+                            Appearance="Secondary"
+                            Command="{Binding ViewModel.CheckForUpdatesCommand}"
+                            Content="Check for updates" />
+                        <ui:Button
+                            Appearance="Primary"
+                            Command="{Binding ViewModel.RestartAndUpdateCommand}"
+                            Content="Restart and update" />
+                    </StackPanel>
                 </Grid>
             </ui:Card>
         </StackPanel>

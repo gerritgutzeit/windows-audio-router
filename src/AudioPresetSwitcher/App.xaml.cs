@@ -48,6 +48,7 @@ public partial class App
                 services.AddSingleton<NotificationService>();
                 services.AddSingleton<ThemeSettingsService>();
                 services.AddSingleton<StartupService>();
+                services.AddSingleton<UpdateService>();
                 services.AddSingleton<WindowService>();
                 services.AddSingleton<TrayService>();
                 services.AddSingleton<IpcService>();
@@ -91,6 +92,21 @@ public partial class App
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         e.Handled = true;
+        try
+        {
+            var logDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "AudioPresetSwitcher");
+            Directory.CreateDirectory(logDir);
+            File.AppendAllText(
+                Path.Combine(logDir, "error.log"),
+                $"{DateTime.Now:o}{Environment.NewLine}{e.Exception}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch
+        {
+            // ignore
+        }
+
         try
         {
             GetRequiredService<NotificationService>().Show("AudioPresetSwitcher", e.Exception.Message);

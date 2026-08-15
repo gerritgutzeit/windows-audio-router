@@ -15,6 +15,7 @@ Closing the window hides the app to the tray. Exit is only available from the si
 - CLI for Stream Deck and other automation
 - Optional Windows toast when a preset is applied
 - Optional start with Windows
+- Installer and auto-updates via [Velopack](https://velopack.io/) (GitHub Releases)
 
 Devices are matched by a **keyword** against the current Windows `FriendlyName` (for example `Arctis Nova` or `Shure MV7`). That survives USB/Bluetooth reconnects, which change the internal device GUID.
 
@@ -23,14 +24,16 @@ Applying a preset sets multimedia **and** communications defaults (Teams, Discor
 ## Requirements
 
 - Windows 10 1809 or later (Windows 11 recommended)
-- For running a Release: nothing else — the published EXE is self-contained
+- For a Release install: nothing else — Setup is self-contained
 - For building from source: [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ## Install from GitHub Releases
 
 1. Open the [Releases](../../releases) page.
-2. Download `AudioPresetSwitcher-win-x64.zip` or `AudioPresetSwitcher.exe`.
-3. Put the EXE somewhere stable (for example `%LOCALAPPDATA%\Programs\AudioPresetSwitcher`) and run it.
+2. Download **`AudioPresetSwitcher-win-Setup.exe`** (Velopack installer) and run it.
+3. Launch from the Start menu shortcut.
+
+The app checks GitHub Releases for updates in the background. When a new version is ready, open **Settings** and choose **Restart and update** (or use **Check for updates**).
 
 Windows SmartScreen may warn on the first launch because the binary is not code-signed. Choose **More info** → **Run anyway** if you built or downloaded it from this repository.
 
@@ -42,6 +45,12 @@ Settings live in:
 
 That file is created automatically. Do not edit it by hand unless you know what you are doing.
 
+Installed binaries live under:
+
+```text
+%LocalAppData%\AudioPresetSwitcher\current\
+```
+
 ## Usage
 
 ### Dashboard
@@ -50,7 +59,7 @@ That file is created automatically. Do not edit it by hand unless you know what 
 | --- | --- |
 | **Presets** | List of presets. **Activate** applies devices immediately. Chevron → Edit / Duplicate / Delete. |
 | **Live status** | Connected playback and recording devices, volume, live levels, default-role badges. |
-| **Settings** | Run at startup, theme, toast notifications. |
+| **Settings** | Run at startup, theme, toast notifications, updates. |
 
 In the preset editor, pick devices from the dropdowns, then optionally shorten the **match keyword** so it still matches after Windows renames the endpoint slightly.
 
@@ -64,9 +73,9 @@ In the preset editor, pick devices from the dropdowns, then optionally shorten t
 If the tray app is already running, a second process forwards the command over a local named pipe and exits. If it is not running, the first instance applies the preset and stays in the tray (no window).
 
 ```text
-AudioPresetSwitcher.exe --preset "Desk"
-AudioPresetSwitcher.exe -p "Desk"
-AudioPresetSwitcher.exe --preset-index 0
+"%LocalAppData%\AudioPresetSwitcher\current\AudioPresetSwitcher.exe" --preset "Desk"
+"%LocalAppData%\AudioPresetSwitcher\current\AudioPresetSwitcher.exe" -p "Desk"
+"%LocalAppData%\AudioPresetSwitcher\current\AudioPresetSwitcher.exe" --preset-index 0
 ```
 
 | Flag | Meaning | Exit code |
@@ -74,7 +83,7 @@ AudioPresetSwitcher.exe --preset-index 0
 | `--preset` / `-p` | Preset name (case-insensitive) | `0` on success, `1` if missing or switch failed |
 | `--preset-index` | Zero-based index in the saved list | same |
 
-Stream Deck: add a **System → Open** action pointing at the EXE, with arguments `--preset "Headset"`.
+Stream Deck: add a **System → Open** action pointing at the installed EXE under `%LocalAppData%\AudioPresetSwitcher\current\`, with arguments `--preset "Headset"`.
 
 ## Build from source
 
@@ -83,13 +92,22 @@ dotnet restore AudioPresetSwitcher.sln
 dotnet build AudioPresetSwitcher.sln -c Release
 ```
 
-Self-contained single-file EXE (same output GitHub Actions attaches to a Release):
+Self-contained publish folder (input for Velopack packaging):
 
 ```powershell
 dotnet publish src/AudioPresetSwitcher/AudioPresetSwitcher.csproj -c Release -p:PublishProfile=win-x64
 ```
 
-Output: `publish/win-x64/AudioPresetSwitcher.exe`
+Output: `publish/win-x64/`
+
+To build a local installer (requires [`vpk`](https://docs.velopack.io/) 1.2.0):
+
+```powershell
+dotnet tool install -g vpk --version 1.2.0
+vpk pack -u AudioPresetSwitcher -v 1.0.0 -p publish/win-x64 --mainExe AudioPresetSwitcher.exe --packTitle "AudioPresetSwitcher" --icon src/AudioPresetSwitcher/Assets/app.ico --shortcuts StartMenu -o releases
+```
+
+Setup.exe is under `releases/`. GitHub tag pushes (`v*`) run the same flow in CI and upload the Velopack assets.
 
 ## How matching works
 
@@ -108,3 +126,4 @@ If a side has an empty keyword, that side is left unchanged. If a keyword matche
 - [WPF-UI](https://github.com/lepoco/wpfui) (Fluent, Mica)
 - [H.NotifyIcon.Wpf](https://github.com/HavenDV/H.NotifyIcon)
 - [NAudio](https://github.com/naudio/NAudio) (WASAPI enumerate, meters, device watch)
+- [Velopack](https://velopack.io/) (installer and auto-updates)

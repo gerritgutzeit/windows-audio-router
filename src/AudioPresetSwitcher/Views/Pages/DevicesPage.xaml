@@ -5,63 +5,123 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    xmlns:converters="clr-namespace:AudioPresetSwitcher.Converters"
     xmlns:pages="clr-namespace:AudioPresetSwitcher.ViewModels.Pages"
     d:DataContext="{d:DesignInstance pages:DevicesViewModel}"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    ScrollViewer.CanContentScroll="False"
     mc:Ignorable="d">
     <Page.Resources>
-        <converters:NullOrEmptyToVisibilityConverter x:Key="EmptyToVis" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <SolidColorBrush x:Key="OnAccentTextBrush" Color="{DynamicResource TextOnAccentFillColorPrimary}" />
+
+        <Style x:Key="PeakMeterStyle" TargetType="ProgressBar">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="100" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                    <Setter Property="Opacity" Value="0.35" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DeviceIconTileStyle" TargetType="Border">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="Margin" Value="0,0,16,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDefaultMultimedia}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccentFillColorSecondaryBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="RoleChipTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
         <DataTemplate x:Key="DeviceCardTemplate" DataType="{x:Type pages:LiveDeviceCardViewModel}">
-            <ui:Card Margin="0,0,0,12" Padding="18">
+            <ui:Card Margin="0,0,0,10" Padding="20">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
                     <Border
-                        Width="48"
-                        Height="48"
-                        Margin="0,0,16,0"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}"
-                        CornerRadius="8">
+                        Grid.RowSpan="2"
+                        Style="{StaticResource DeviceIconTileStyle}">
                         <ui:SymbolIcon
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             FontSize="24"
                             Symbol="{Binding IconSymbol}" />
                     </Border>
-                    <StackPanel Grid.Column="1">
-                        <DockPanel LastChildFill="False">
+
+                    <TextBlock
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Text="{Binding Name}"
+                        TextTrimming="CharacterEllipsis" />
+
+                    <WrapPanel
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Visibility="{Binding ShowRoleChips, Converter={StaticResource BoolToVis}}">
+                        <Border
+                            Margin="8,0,0,0"
+                            Padding="8,3"
+                            Background="{DynamicResource AccentFillColorDefaultBrush}"
+                            CornerRadius="4"
+                            Visibility="{Binding ShowDefaultBadge, Converter={StaticResource BoolToVis}}">
                             <TextBlock
-                                DockPanel.Dock="Left"
-                                FontSize="16"
-                                FontWeight="SemiBold"
-                                Text="{Binding Name}"
-                                TextTrimming="CharacterEllipsis" />
-                            <ui:InfoBadge
-                                Margin="8,0,0,0"
-                                DockPanel.Dock="Right"
-                                Severity="Informational"
-                                Visibility="{Binding CommunicationsBadge, Converter={StaticResource EmptyToVis}}"
-                                Value="{Binding CommunicationsBadge}" />
-                            <ui:InfoBadge
-                                Margin="8,0,0,0"
-                                DockPanel.Dock="Right"
-                                Severity="Success"
-                                Visibility="{Binding DefaultBadge, Converter={StaticResource EmptyToVis}}"
-                                Value="{Binding DefaultBadge}" />
-                        </DockPanel>
+                                Style="{StaticResource RoleChipTextStyle}"
+                                Foreground="{StaticResource OnAccentTextBrush}"
+                                Text="Default" />
+                        </Border>
+                        <Border
+                            Margin="8,0,0,0"
+                            Padding="8,3"
+                            Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Visibility="{Binding ShowCommunicationsBadge, Converter={StaticResource BoolToVis}}">
+                            <TextBlock
+                                Style="{StaticResource RoleChipTextStyle}"
+                                Text="Communications" />
+                        </Border>
+                    </WrapPanel>
+
+                    <StackPanel
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Margin="0,8,0,0">
                         <TextBlock
-                            Margin="0,4,0,8"
+                            Margin="0,0,0,8"
                             Opacity="0.72"
                             Text="{Binding StatusText}" />
                         <ProgressBar
-                            Height="6"
-                            Maximum="100"
-                            Minimum="0"
+                            Style="{StaticResource PeakMeterStyle}"
                             Value="{Binding Peak, Mode=OneWay}" />
                     </StackPanel>
                 </Grid>
@@ -69,31 +129,59 @@
         </DataTemplate>
     </Page.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="0,8,0,18">
             <TextBlock
-                Margin="0,8,0,4"
                 FontSize="28"
                 FontWeight="SemiBold"
                 Text="Live status" />
             <TextBlock
-                Margin="0,0,0,20"
+                Margin="0,4,0,0"
                 Opacity="0.72"
                 Text="Connected playback and recording devices, with live levels." />
-
-            <TextBlock
-                Margin="0,0,0,10"
-                FontSize="16"
-                FontWeight="SemiBold"
-                Text="Playback" />
-            <ItemsControl ItemTemplate="{StaticResource DeviceCardTemplate}" ItemsSource="{Binding ViewModel.PlaybackDevices}" />
-
-            <TextBlock
-                Margin="0,16,0,10"
-                FontSize="16"
-                FontWeight="SemiBold"
-                Text="Recording" />
-            <ItemsControl ItemTemplate="{StaticResource DeviceCardTemplate}" ItemsSource="{Binding ViewModel.RecordingDevices}" />
         </StackPanel>
-    </ScrollViewer>
+
+        <ScrollViewer
+            x:Name="DeviceListScrollViewer"
+            Grid.Row="1"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,0,8" PreviewMouseWheel="OnPreviewMouseWheel">
+                <Grid Margin="0,0,0,12">
+                    <TextBlock
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Text="Playback" />
+                    <TextBlock
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Opacity="0.56"
+                        Text="{Binding ViewModel.PlaybackDevices.Count}" />
+                </Grid>
+                <ItemsControl
+                    ItemTemplate="{StaticResource DeviceCardTemplate}"
+                    ItemsSource="{Binding ViewModel.PlaybackDevices}" />
+
+                <Grid Margin="0,8,0,12">
+                    <TextBlock
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Text="Recording" />
+                    <TextBlock
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Opacity="0.56"
+                        Text="{Binding ViewModel.RecordingDevices.Count}" />
+                </Grid>
+                <ItemsControl
+                    ItemTemplate="{StaticResource DeviceCardTemplate}"
+                    ItemsSource="{Binding ViewModel.RecordingDevices}" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Page>

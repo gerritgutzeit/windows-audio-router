@@ -1,7 +1,7 @@
+using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using AudioPresetSwitcher.Models;
 using H.NotifyIcon;
 using H.NotifyIcon.Core;
@@ -15,6 +15,9 @@ public sealed class TrayService : IDisposable
     private readonly NotificationService _notifications;
     private readonly WindowService _windows;
     private TaskbarIcon? _icon;
+    private Icon? _trayIcon;
+    private EventHandler? _settingsChangedHandler;
+    private EventHandler<PresetActivationResult>? _presetActivatedHandler;
 
     public TrayService(
         SettingsService settings,
@@ -30,26 +33,68 @@ public sealed class TrayService : IDisposable
 
     public void Initialize()
     {
-        _icon = new TaskbarIcon
+        try
         {
-            ToolTipText = "AudioPresetSwitcher",
-            IconSource = new BitmapImage(new Uri("pack://application:,,,/Assets/app.ico")),
-            NoLeftClickDelay = true,
-            MenuActivation = PopupActivationMode.RightClick,
-            LeftClickCommand = new RelayCommand(_windows.ShowDashboard)
-        };
+            _trayIcon = LoadTrayIcon();
+            _icon = new TaskbarIcon
+            {
+                ToolTipText = "AudioPresetSwitcher",
+                Icon = _trayIcon,
+                NoLeftClickDelay = true,
+                MenuActivation = PopupActivationMode.RightClick,
+                LeftClickCommand = new RelayCommand(_windows.ShowDashboard)
+            };
 
-        RebuildMenu();
-        _settings.Changed += (_, _) => RebuildMenu();
-        _audio.PresetActivated += (_, _) => RebuildMenu();
-        _notifications.TrayNotification += OnTrayNotification;
+            RebuildMenu();
+            _icon.ForceCreate(enablesEfficiencyMode: false);
+
+            _settingsChangedHandler = (_, _) => RebuildMenu();
+            _presetActivatedHandler = (_, _) => RebuildMenu();
+            _settings.Changed += _settingsChangedHandler;
+            _audio.PresetActivated += _presetActivatedHandler;
+            _notifications.TrayNotification += OnTrayNotification;
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                _notifications.Show("AudioPresetSwitcher", $"Tray icon failed: {ex.Message}");
+            }
+            catch
+            {
+                // ignore secondary failures during startup
+            }
+        }
     }
 
     public void Dispose()
     {
         _notifications.TrayNotification -= OnTrayNotification;
+        if (_settingsChangedHandler is not null)
+        {
+            _settings.Changed -= _settingsChangedHandler;
+        }
+
+        if (_presetActivatedHandler is not null)
+        {
+            _audio.PresetActivated -= _presetActivatedHandler;
+        }
+
         _icon?.Dispose();
         _icon = null;
+        _trayIcon?.Dispose();
+        _trayIcon = null;
+    }
+
+    private static Icon LoadTrayIcon()
+    {
+        var uri = new Uri("pack://application:,,,/Assets/app.ico");
+        var streamInfo = Application.GetResourceStream(uri)
+            ?? throw new InvalidOperationException("Tray icon resource Assets/app.ico was not found.");
+
+        using var stream = streamInfo.Stream;
+        using var loaded = new Icon(stream);
+        return (Icon)loaded.Clone();
     }
 
     private void OnTrayNotification(string title, string message)
@@ -90,9 +135,10 @@ public sealed class TrayService : IDisposable
             }
 
             menu.Items.Add(new Separator());
-            var open = new MenuItem { Header = "Open AudioPresetSwitcher" };
-            open.Click += (_, _) => _windows.ShowDashboard();
-            menu.Items.Add(open);
+
+            var settings = new MenuItem { Header = "Settings" };
+            settings.Click += (_, _) => _windows.ShowSettings();
+            menu.Items.Add(settings);
 
             var exit = new MenuItem { Header = "Exit" };
             exit.Click += (_, _) => _windows.Exit();

@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using Velopack.Locators;
 
 namespace AudioPresetSwitcher.Services;
 
@@ -20,12 +21,26 @@ public sealed class StartupService
 
         if (enabled)
         {
-            var exe = Environment.ProcessPath ?? AppContext.BaseDirectory;
-            key.SetValue(ValueName, $"\"{exe}\"");
+            key.SetValue(ValueName, BuildLaunchCommand());
         }
         else if (key.GetValue(ValueName) is not null)
         {
             key.DeleteValue(ValueName, throwOnMissingValue: false);
         }
+    }
+
+    private static string BuildLaunchCommand()
+    {
+        if (VelopackLocator.IsCurrentSet)
+        {
+            var updateExe = VelopackLocator.Current.UpdateExePath;
+            if (!string.IsNullOrWhiteSpace(updateExe) && File.Exists(updateExe))
+            {
+                return $"\"{updateExe}\" start";
+            }
+        }
+
+        var exe = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "AudioPresetSwitcher.exe");
+        return $"\"{exe}\"";
     }
 }

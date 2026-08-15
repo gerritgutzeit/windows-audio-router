@@ -15,6 +15,7 @@ public sealed class ApplicationHostService(
     NotificationService notifications,
     ThemeSettingsService theme,
     StartupService startup,
+    UpdateService updates,
     WindowService windows,
     TrayService tray) : IHostedService
 {
@@ -55,6 +56,7 @@ public sealed class ApplicationHostService(
             windows.ShowDashboard();
         }
 
+        _ = updates.CheckAndDownloadInBackgroundAsync(cancellationToken);
         return Task.CompletedTask;
     }
 

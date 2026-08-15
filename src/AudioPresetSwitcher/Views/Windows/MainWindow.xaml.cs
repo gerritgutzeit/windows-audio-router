@@ -66,6 +66,15 @@ public partial class MainWindow : INavigationWindow
         base.OnClosing(e);
     }
 
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        if (WindowState == WindowState.Minimized && !_windows.ExitRequested)
+        {
+            _windows.HideDashboard();
+        }
+    }
+
     private void OnCloseClicked(object sender, RoutedEventArgs e)
     {
         _windows.HideDashboard();
