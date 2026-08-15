@@ -1,4 +1,3 @@
-using System.Windows.Media;
 using AudioPresetSwitcher.Services;
 using AudioPresetSwitcher.Views.Pages;
 using Wpf.Ui.Controls;
@@ -7,7 +6,7 @@ namespace AudioPresetSwitcher.ViewModels.Windows;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public MainWindowViewModel()
+    public MainWindowViewModel(WindowService windows)
     {
         ApplicationTitle = "AudioPresetSwitcher";
 
@@ -39,7 +38,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 Content = "Exit",
                 Icon = new SymbolIcon { Symbol = SymbolRegular.Power24 },
-                Tag = WindowService.ExitTag
+                Command = new RelayCommand(windows.Exit)
             }
         ];
     }

@@ -57,7 +57,10 @@ public sealed class IpcService : IHostedService, IDisposable
         {
             try
             {
-                await _listenTask.WaitAsync(cancellationToken);
+                await _listenTask.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
+            }
+            catch (TimeoutException)
+            {
             }
             catch (OperationCanceledException)
             {

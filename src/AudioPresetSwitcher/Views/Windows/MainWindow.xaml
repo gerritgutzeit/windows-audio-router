@@ -6,6 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:windows="clr-namespace:AudioPresetSwitcher.ViewModels.Windows"
+    xmlns:controls="clr-namespace:AudioPresetSwitcher.Views.Controls"
     Title="{Binding ViewModel.ApplicationTitle, Mode=OneWay}"
     Width="960"
     Height="680"
@@ -24,6 +25,10 @@
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </ui:FluentWindow.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -33,8 +38,11 @@
         <ui:TitleBar
             Title="{Binding ViewModel.ApplicationTitle, Mode=OneWay}"
             Grid.Row="0"
-            CloseClicked="OnCloseClicked"
-            Icon="pack://application:,,,/Assets/app.ico" />
+            CloseClicked="OnCloseClicked">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/app.ico" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
 
         <ui:NavigationView
             x:Name="RootNavigation"
@@ -46,8 +54,12 @@
             IsPaneToggleVisible="True"
             MenuItemsSource="{Binding ViewModel.MenuItems, Mode=OneWay}"
             OpenPaneLength="228"
-            PaneDisplayMode="Left"
-            SelectionChanged="OnNavigationSelectionChanged">
+            PaneDisplayMode="Left">
+            <ui:NavigationView.PaneFooter>
+                <controls:CurrentAudioStatusView
+                    x:Name="CurrentAudioStatus"
+                    Visibility="{Binding IsPaneOpen, ElementName=RootNavigation, Converter={StaticResource BoolToVis}}" />
+            </ui:NavigationView.PaneFooter>
             <ui:NavigationView.ContentOverlay>
                 <Grid>
                     <ui:SnackbarPresenter x:Name="SnackbarPresenter" />

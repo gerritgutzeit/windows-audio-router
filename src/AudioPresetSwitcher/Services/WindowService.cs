@@ -6,11 +6,11 @@ namespace AudioPresetSwitcher.Services;
 
 public sealed class WindowService
 {
-    public const string ExitTag = "exit";
-
     private MainWindow? _window;
 
     public bool ExitRequested { get; private set; }
+
+    public event Action? Exiting;
 
     public void Attach(MainWindow window) => _window = window;
 
@@ -56,7 +56,33 @@ public sealed class WindowService
 
     public void Exit()
     {
+        if (ExitRequested)
+        {
+            return;
+        }
+
         ExitRequested = true;
-        Application.Current.Shutdown();
+
+        void ShutdownApp()
+        {
+            Exiting?.Invoke();
+            Application.Current.Shutdown();
+        }
+
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null)
+        {
+            Environment.Exit(0);
+            return;
+        }
+
+        if (dispatcher.CheckAccess())
+        {
+            ShutdownApp();
+        }
+        else
+        {
+            dispatcher.Invoke(ShutdownApp);
+        }
     }
 }

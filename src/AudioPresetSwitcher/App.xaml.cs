@@ -56,6 +56,7 @@ public partial class App
                 services.AddHostedService<ApplicationHostService>();
 
                 services.AddSingleton<MainWindowViewModel>();
+                services.AddSingleton<CurrentAudioStatusViewModel>();
                 services.AddSingleton<MainWindow>();
                 services.AddSingleton<PresetsViewModel>();
                 services.AddSingleton<PresetsPage>();

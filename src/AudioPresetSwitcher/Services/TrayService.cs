@@ -33,6 +33,7 @@ public sealed class TrayService : IDisposable
 
     public void Initialize()
     {
+        _windows.Exiting += Dispose;
         try
         {
             _trayIcon = LoadTrayIcon();
@@ -69,6 +70,7 @@ public sealed class TrayService : IDisposable
 
     public void Dispose()
     {
+        _windows.Exiting -= Dispose;
         _notifications.TrayNotification -= OnTrayNotification;
         if (_settingsChangedHandler is not null)
         {

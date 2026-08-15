@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
 using AudioPresetSwitcher.Services;
 using AudioPresetSwitcher.ViewModels.Windows;
 using AudioPresetSwitcher.Views.Pages;
@@ -18,6 +17,7 @@ public partial class MainWindow : INavigationWindow
 
     public MainWindow(
         MainWindowViewModel viewModel,
+        CurrentAudioStatusViewModel statusViewModel,
         INavigationViewPageProvider navigationViewPageProvider,
         INavigationService navigationService,
         IContentDialogService contentDialogService,
@@ -25,6 +25,7 @@ public partial class MainWindow : INavigationWindow
         WindowService windows)
     {
         ViewModel = viewModel;
+        StatusViewModel = statusViewModel;
         DataContext = this;
         _windows = windows;
         _contentDialogService = contentDialogService;
@@ -32,6 +33,7 @@ public partial class MainWindow : INavigationWindow
 
         SystemThemeWatcher.Watch(this);
         InitializeComponent();
+        CurrentAudioStatus.DataContext = StatusViewModel;
         SetPageService(navigationViewPageProvider);
         navigationService.SetNavigationControl(RootNavigation);
         _snackbarService.SetSnackbarPresenter(SnackbarPresenter);
@@ -48,6 +50,8 @@ public partial class MainWindow : INavigationWindow
     }
 
     public MainWindowViewModel ViewModel { get; }
+
+    public CurrentAudioStatusViewModel StatusViewModel { get; }
 
     public INavigationView GetNavigation() => RootNavigation;
 
@@ -88,13 +92,5 @@ public partial class MainWindow : INavigationWindow
     private void OnCloseClicked(object sender, RoutedEventArgs e)
     {
         _windows.HideDashboard();
-    }
-
-    private void OnNavigationSelectionChanged(object sender, RoutedEventArgs e)
-    {
-        if (RootNavigation.SelectedItem is NavigationViewItem { Tag: WindowService.ExitTag })
-        {
-            _windows.Exit();
-        }
     }
 }
