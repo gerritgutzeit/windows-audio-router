@@ -45,6 +45,7 @@ public partial class App
 
                 services.AddSingleton<SettingsService>();
                 services.AddSingleton<AudioDeviceService>();
+                services.AddSingleton<ShortcutService>();
                 services.AddSingleton<NotificationService>();
                 services.AddSingleton<ThemeSettingsService>();
                 services.AddSingleton<StartupService>();

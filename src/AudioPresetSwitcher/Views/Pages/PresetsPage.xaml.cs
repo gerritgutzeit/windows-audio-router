@@ -45,6 +45,14 @@ public partial class PresetsPage : INavigableView<PresetsViewModel>
         }
     }
 
+    private void OnCreateShortcutClick(object sender, RoutedEventArgs e)
+    {
+        if (FindCard(sender) is { } card)
+        {
+            ViewModel.CreateShortcutCommand.Execute(card);
+        }
+    }
+
     private async void OnDeleteClick(object sender, RoutedEventArgs e)
     {
         if (FindCard(sender) is { } card)

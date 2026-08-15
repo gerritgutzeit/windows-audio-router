@@ -3,6 +3,7 @@ using AudioPresetSwitcher.Models;
 using AudioPresetSwitcher.Services;
 using AudioPresetSwitcher.ViewModels.Dialogs;
 using AudioPresetSwitcher.Views.Dialogs;
+using Microsoft.Win32;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -13,6 +14,7 @@ public partial class PresetsViewModel : ObservableObject
     private readonly SettingsService _settings;
     private readonly AudioDeviceService _audio;
     private readonly NotificationService _notifications;
+    private readonly ShortcutService _shortcuts;
     private readonly IContentDialogService _dialogs;
     private readonly ISnackbarService _snackbar;
 
@@ -20,12 +22,14 @@ public partial class PresetsViewModel : ObservableObject
         SettingsService settings,
         AudioDeviceService audio,
         NotificationService notifications,
+        ShortcutService shortcuts,
         IContentDialogService dialogs,
         ISnackbarService snackbar)
     {
         _settings = settings;
         _audio = audio;
         _notifications = notifications;
+        _shortcuts = shortcuts;
         _dialogs = dialogs;
         _snackbar = snackbar;
 
@@ -102,6 +106,75 @@ public partial class PresetsViewModel : ObservableObject
                 s.LastActivePresetId = null;
             }
         });
+    }
+
+    [RelayCommand]
+    private void CreateShortcut(PresetCardViewModel? card)
+    {
+        if (card is null)
+        {
+            return;
+        }
+
+        var fileName = ShortcutService.SanitizeFileName(card.Name);
+        var dialog = new SaveFileDialog
+        {
+            Title = "Create shortcut",
+            Filter = "Shortcut (*.lnk)|*.lnk",
+            DefaultExt = ".lnk",
+            AddExtension = true,
+            FileName = fileName,
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+            OverwritePrompt = true
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var exe = _shortcuts.ResolveExecutablePath();
+            if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe))
+            {
+                _snackbar.Show(
+                    "Could not create shortcut",
+                    "Application executable was not found.",
+                    ControlAppearance.Caution,
+                    null,
+                    TimeSpan.FromSeconds(4));
+                return;
+            }
+
+            var path = dialog.FileName;
+            if (!path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
+            {
+                path += ".lnk";
+            }
+
+            _shortcuts.CreateShortcut(
+                path,
+                exe,
+                ShortcutService.FormatPresetArguments(card.Preset.Name),
+                $"Activate preset \"{card.Preset.Name}\"");
+
+            _snackbar.Show(
+                "Shortcut created",
+                Path.GetFileName(path),
+                ControlAppearance.Success,
+                null,
+                TimeSpan.FromSeconds(3));
+        }
+        catch (Exception ex)
+        {
+            _snackbar.Show(
+                "Could not create shortcut",
+                ex.Message,
+                ControlAppearance.Caution,
+                null,
+                TimeSpan.FromSeconds(4));
+        }
     }
 
     private async Task EditAsync(AudioPreset? existing)

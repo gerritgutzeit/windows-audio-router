@@ -60,7 +60,7 @@ Installed binaries live under:
 
 | Page | What it does |
 | --- | --- |
-| **Presets** | List of presets. **Activate** applies devices immediately. Chevron → Edit / Duplicate / Delete. |
+| **Presets** | List of presets. **Activate** applies devices immediately. Chevron → Edit / Duplicate / Create shortcut… / Delete. |
 | **Live status** | Connected playback and recording devices, volume, live levels, default-role badges. |
 | **Settings** | Run at startup, theme, toast notifications, updates. |
 
@@ -87,6 +87,8 @@ If the tray app is already running, a second process forwards the command over a
 | `--preset-index` | Zero-based index in the saved list | same |
 
 Stream Deck: add a **System → Open** action pointing at the installed EXE under `%LocalAppData%\AudioPresetSwitcher\current\`, with arguments `--preset "Headset"`.
+
+From the Presets page, use the chevron menu → **Create shortcut…** to save a Desktop (or other) `.lnk` that launches the same command.
 
 ## Build from source
 

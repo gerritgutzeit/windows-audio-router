@@ -122,6 +122,9 @@
                                                         Click="OnDuplicateClick"
                                                         Header="Duplicate" />
                                                     <MenuItem
+                                                        Click="OnCreateShortcutClick"
+                                                        Header="Create shortcut..." />
+                                                    <MenuItem
                                                         Click="OnDeleteClick"
                                                         Header="Delete" />
                                                 </ContextMenu>
