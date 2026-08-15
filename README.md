@@ -4,6 +4,8 @@ Windows 11 system-tray app that switches default playback and recording devices 
 
 Closing the window hides the app to the tray. Exit is only available from the sidebar footer or the tray menu.
 
+![AudioPresetSwitcher dashboard](docs/images/Screenshot.png)
+
 ## Features
 
 - Card-based preset manager (create, edit, duplicate, delete, activate)
@@ -89,31 +91,6 @@ dotnet publish src/AudioPresetSwitcher/AudioPresetSwitcher.csproj -c Release -p:
 
 Output: `publish/win-x64/AudioPresetSwitcher.exe`
 
-## Publish to GitHub (including the Releases page)
-
-There is no remote yet. Do this once:
-
-1. Create an **empty** repository on GitHub (no README, no `.gitignore`, no license — this repo already has those).
-2. Add the remote and push `main`:
-
-```powershell
-git add README.md .github .gitignore src/AudioPresetSwitcher/Services/NotificationService.cs
-git commit -m "Add README, CI, and GitHub Release workflow."
-git remote add origin https://github.com/<you>/windows-audio-router.git
-git push -u origin main
-```
-
-3. Create a version tag. That starts `.github/workflows/release.yml`, which builds the EXE and opens a GitHub Release with the artifacts attached:
-
-```powershell
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-Later releases: bump the tag (`v1.0.1`, `v1.1.0`, …) and push it. Release notes are generated from commits since the previous tag.
-
-The Actions tab must be enabled on the repository. The `GITHUB_TOKEN` used by the workflow is provided by GitHub; you do not add secrets for this.
-
 ## How matching works
 
 Each preset stores keywords, not GUIDs.
@@ -124,16 +101,6 @@ Each preset stores keywords, not GUIDs.
 4. Set Console, Multimedia, and Communications roles for the matched playback and recording devices.
 
 If a side has an empty keyword, that side is left unchanged. If a keyword matches nothing, that side is skipped and a toast explains which keyword failed.
-
-## Privacy and what is (not) in this repo
-
-Safe to push: source, icons, project files, workflows. Build output (`bin/`, `obj/`, `publish/`) and your real `settings.json` are gitignored.
-
-Nothing in the repository is a credential, API key, or machine-specific path. Presets and device names stay on your PC under `%AppData%`.
-
-Local IPC uses a named pipe (`AudioPresetSwitcher.ipc`) on the same Windows session so Stream Deck can talk to the tray process. It is not exposed on the network.
-
-Default-device switching uses the undocumented Windows `IPolicyConfig` COM interface (same approach as tools like EarTrumpet). Microsoft does not document it; it is the practical way to change the system default from an app.
 
 ## Tech stack
 
