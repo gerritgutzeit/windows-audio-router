@@ -3,6 +3,8 @@
 
 Windows 11 system-tray app that switches default playback and recording devices with one click. Presets are edited in a Fluent dashboard — never in a JSON file.
 
+**Landing page:** [gerritgutzeit.github.io/windows-audio-router](https://gerritgutzeit.github.io/windows-audio-router/)
+
 Closing the window hides the app to the tray. Exit is only available from the sidebar footer or the tray menu.
 
 ![AudioPresetSwitcher dashboard](docs/images/Screenshot.png)

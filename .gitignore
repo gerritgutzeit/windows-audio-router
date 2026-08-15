@@ -56,3 +56,7 @@ settings.json
 *.sln.iml
 .vscode/
 .cursor/
+
+## Web (landing page)
+web/node_modules/
+web/dist/
