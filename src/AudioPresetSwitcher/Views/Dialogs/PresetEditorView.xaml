@@ -1,0 +1,41 @@
+<UserControl
+    x:Class="AudioPresetSwitcher.Views.Dialogs.PresetEditorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:dialogs="clr-namespace:AudioPresetSwitcher.ViewModels.Dialogs"
+    d:DataContext="{d:DesignInstance dialogs:PresetEditorViewModel}"
+    MinWidth="460"
+    mc:Ignorable="d">
+    <StackPanel>
+        <TextBlock Margin="0,0,0,6" Text="Preset name" />
+        <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+        <TextBlock Margin="0,16,0,6" Text="Icon" />
+        <ComboBox ItemsSource="{Binding IconOptions}" SelectedItem="{Binding Icon, Mode=TwoWay}" />
+
+        <TextBlock Margin="0,16,0,6" Text="Playback device" />
+        <ComboBox
+            DisplayMemberPath="FriendlyName"
+            ItemsSource="{Binding PlaybackDevices}"
+            SelectedItem="{Binding SelectedPlaybackDevice, Mode=TwoWay}" />
+        <TextBlock Margin="0,10,0,6" Opacity="0.72" Text="Match keyword" />
+        <ui:TextBox PlaceholderText="e.g. Arctis Nova" Text="{Binding PlaybackKeyword, UpdateSourceTrigger=PropertyChanged}" />
+
+        <TextBlock Margin="0,16,0,6" Text="Recording device" />
+        <ComboBox
+            DisplayMemberPath="FriendlyName"
+            ItemsSource="{Binding RecordingDevices}"
+            SelectedItem="{Binding SelectedRecordingDevice, Mode=TwoWay}" />
+        <TextBlock Margin="0,10,0,6" Opacity="0.72" Text="Match keyword" />
+        <ui:TextBox PlaceholderText="e.g. Shure MV7" Text="{Binding RecordingKeyword, UpdateSourceTrigger=PropertyChanged}" />
+
+        <TextBlock
+            Margin="0,16,0,0"
+            Opacity="0.64"
+            TextWrapping="Wrap"
+            Text="Calls (Teams/Discord) use the same playback and recording devices." />
+    </StackPanel>
+</UserControl>

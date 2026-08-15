@@ -1,0 +1,92 @@
+<Page
+    x:Class="AudioPresetSwitcher.Views.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:pages="clr-namespace:AudioPresetSwitcher.ViewModels.Pages"
+    d:DataContext="{d:DesignInstance pages:SettingsViewModel}"
+    ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+    ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock
+                Margin="0,8,0,4"
+                FontSize="28"
+                FontWeight="SemiBold"
+                Text="Settings" />
+            <TextBlock
+                Margin="0,0,0,20"
+                Opacity="0.72"
+                Text="Startup, appearance, and notifications. Presets are saved automatically." />
+
+            <ui:Card Margin="0,0,0,12" Padding="18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock FontWeight="SemiBold" Text="Run at Windows startup" />
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            Opacity="0.72"
+                            Text="Start in the system tray when you sign in." />
+                    </StackPanel>
+                    <ui:ToggleSwitch
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding ViewModel.RunAtStartup, Mode=TwoWay}"
+                        OffContent="Off"
+                        OnContent="On" />
+                </Grid>
+            </ui:Card>
+
+            <ui:Card Margin="0,0,0,12" Padding="18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="220" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock FontWeight="SemiBold" Text="Theme" />
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            Opacity="0.72"
+                            Text="Follow Windows, or lock dark / light." />
+                    </StackPanel>
+                    <ComboBox
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        ItemsSource="{Binding ViewModel.ThemeOptions}"
+                        SelectedItem="{Binding ViewModel.SelectedTheme, Mode=TwoWay}" />
+                </Grid>
+            </ui:Card>
+
+            <ui:Card Padding="18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock FontWeight="SemiBold" Text="Show toast notifications on preset switch" />
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            Opacity="0.72"
+                            Text="A subtle Windows 11 toast when a preset is applied from the tray or CLI." />
+                    </StackPanel>
+                    <ui:ToggleSwitch
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        IsChecked="{Binding ViewModel.ShowToastNotifications, Mode=TwoWay}"
+                        OffContent="Off"
+                        OnContent="On" />
+                </Grid>
+            </ui:Card>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
