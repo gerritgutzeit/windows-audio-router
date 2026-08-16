@@ -10,7 +10,8 @@ import appIcon from '../assets/images/app.png'
 import { DOWNLOAD_URL, REPO_URL } from '../lib/constants'
 import { Button } from './ui/Button'
 
-const VIDEO_SRC = `${import.meta.env.BASE_URL}background_header_loop_hd.mp4`
+const VIDEO_WEBM = `${import.meta.env.BASE_URL}background_header_loop_hd.webm`
+const VIDEO_MP4 = `${import.meta.env.BASE_URL}background_header_loop_hd.mp4`
 const FALLBACK_BG = '#080809'
 
 export function Hero() {
@@ -106,7 +107,6 @@ export function Hero() {
               <video
                 ref={videoRef}
                 className="absolute inset-0 h-full w-full object-cover object-center"
-                src={VIDEO_SRC}
                 autoPlay
                 muted
                 loop
@@ -114,7 +114,10 @@ export function Hero() {
                 preload="auto"
                 disablePictureInPicture
                 onError={() => setVideoFailed(true)}
-              />
+              >
+                <source src={VIDEO_WEBM} type="video/webm" />
+                <source src={VIDEO_MP4} type="video/mp4" />
+              </video>
             )}
             {/* Keep left open for video; shade the copy side */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-void/35 to-void/85" />

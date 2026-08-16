@@ -5,7 +5,8 @@ import appIcon from '../assets/images/app.png'
 import { DOWNLOAD_URL, REPO_URL } from '../lib/constants'
 import { Button } from './ui/Button'
 
-const VIDEO_SRC = `${import.meta.env.BASE_URL}background.mp4`
+const VIDEO_WEBM = `${import.meta.env.BASE_URL}background.webm`
+const VIDEO_MP4 = `${import.meta.env.BASE_URL}background.mp4`
 const PANEL_BG = '#101012'
 
 function useCanHover() {
@@ -114,13 +115,14 @@ export function Footer() {
                 }}
                 muted
                 playsInline
-                preload="metadata"
+                preload="auto"
                 autoPlay={!canHover && !reduceMotion}
                 loop={!canHover}
                 onEnded={onVideoEnded}
                 onError={() => setVideoFailed(true)}
               >
-                <source src={VIDEO_SRC} type="video/mp4" />
+                <source src={VIDEO_WEBM} type="video/webm" />
+                <source src={VIDEO_MP4} type="video/mp4" />
               </video>
             )}
 
