@@ -21,6 +21,7 @@ public sealed class ApplicationHostService(
     public Task StartAsync(CancellationToken cancellationToken)
     {
         notifications.Initialize();
+        startup.RefreshIfEnabled();
         if (settings.Current.RunAtStartup != startup.IsEnabled())
         {
             settings.Update(s => s.RunAtStartup = startup.IsEnabled());

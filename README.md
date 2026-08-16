@@ -114,6 +114,32 @@ vpk pack -u AudioPresetSwitcher -v 1.0.0 -p publish/win-x64 --mainExe AudioPrese
 
 Setup.exe is under `releases/`. GitHub tag pushes (`v*`) run the same flow in CI and upload the Velopack assets.
 
+## Landing page
+
+The marketing site lives in [`web/`](web/) (Vite + React). Dev server and GitHub Pages build:
+
+```powershell
+cd web
+npm install
+npm run dev
+# production:
+npm run build
+npm run preview
+```
+
+### Export Photoshop layers
+
+From `web/`, a Playwright CLI exports the current page as **same-size transparent PNGs** (one stack per section) so you can drop them into Photoshop without aligning by hand:
+
+```powershell
+cd web
+npx playwright install chromium   # once
+npm run export-layers
+npm run export-layers:header      # optional glass nav stack
+```
+
+Output: `web/exports/layers/` (gitignored) — folders for Hero, Product beats, Live, Footer, and optionally Header. Hero / Product / Live / Header canvases are **1920×1080**; Footer uses the CTA panel bounds. Video and void backgrounds are omitted on purpose.
+
 ## How matching works
 
 Each preset stores keywords, not GUIDs.
@@ -132,3 +158,4 @@ If a side has an empty keyword, that side is left unchanged. If a keyword matche
 - [H.NotifyIcon.Wpf](https://github.com/HavenDV/H.NotifyIcon)
 - [NAudio](https://github.com/naudio/NAudio) (WASAPI enumerate, meters, device watch)
 - [Velopack](https://velopack.io/) (installer and auto-updates)
+- Landing page: Vite + React + TypeScript + Playwright (layer export)

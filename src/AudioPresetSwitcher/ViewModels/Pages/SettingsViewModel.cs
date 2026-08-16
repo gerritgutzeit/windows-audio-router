@@ -127,7 +127,12 @@ public partial class SettingsViewModel : ObservableObject
     private void Load()
     {
         _suppress = true;
-        RunAtStartup = _settings.Current.RunAtStartup;
+        RunAtStartup = _startup.IsEnabled();
+        if (_settings.Current.RunAtStartup != RunAtStartup)
+        {
+            _settings.Update(s => s.RunAtStartup = RunAtStartup);
+        }
+
         ShowToastNotifications = _settings.Current.ShowToastNotifications;
         SelectedTheme = _settings.Current.Theme switch
         {

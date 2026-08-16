@@ -7,6 +7,7 @@ public sealed class StartupService
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string ValueName = "AudioPresetSwitcher";
+    private const string TrayArgument = "--tray";
 
     public bool IsEnabled()
     {
@@ -29,18 +30,39 @@ public sealed class StartupService
         }
     }
 
+    /// <summary>
+    /// Rewrites the Run entry so older installs pick up the current launch path/args.
+    /// </summary>
+    public void RefreshIfEnabled()
+    {
+        if (IsEnabled())
+        {
+            SetEnabled(true);
+        }
+    }
+
     private static string BuildLaunchCommand()
     {
         if (VelopackLocator.IsCurrentSet)
         {
+            var root = VelopackLocator.Current.RootAppDir;
+            if (!string.IsNullOrWhiteSpace(root))
+            {
+                var stub = Path.Combine(root, "AudioPresetSwitcher.exe");
+                if (File.Exists(stub))
+                {
+                    return $"\"{stub}\" {TrayArgument}";
+                }
+            }
+
             var updateExe = VelopackLocator.Current.UpdateExePath;
             if (!string.IsNullOrWhiteSpace(updateExe) && File.Exists(updateExe))
             {
-                return $"\"{updateExe}\" start";
+                return $"\"{updateExe}\" start -- {TrayArgument}";
             }
         }
 
         var exe = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "AudioPresetSwitcher.exe");
-        return $"\"{exe}\"";
+        return $"\"{exe}\" {TrayArgument}";
     }
 }

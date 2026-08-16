@@ -7,6 +7,7 @@ public static class CliParser
     public static StartupOptions Parse(IReadOnlyList<string> args)
     {
         var options = new StartupOptions();
+        var trayOnly = false;
         for (var i = 0; i < args.Count; i++)
         {
             var arg = args[i];
@@ -19,9 +20,13 @@ public static class CliParser
                 options.PresetIndex = index;
                 i++;
             }
+            else if (arg is "--tray" or "--minimized")
+            {
+                trayOnly = true;
+            }
         }
 
-        options.ShowWindow = !options.HasPresetRequest;
+        options.ShowWindow = !trayOnly && !options.HasPresetRequest;
         return options;
     }
 }
