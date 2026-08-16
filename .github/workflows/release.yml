@@ -73,6 +73,6 @@ jobs:
             --token $env:GITHUB_TOKEN `
             --publish true `
             --tag $tag `
-            --releaseName "AudioPresetSwitcher $semver" `
+            --releaseName $tag `
             -o releases
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
