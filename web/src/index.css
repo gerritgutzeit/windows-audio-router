@@ -133,3 +133,41 @@
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
   }
 }
+
+/* Photoshop layer exporter (?export=1) */
+html[data-export='1'],
+html[data-export='1'] body,
+html[data-export='1'] #root {
+  background: transparent !important;
+}
+
+html[data-export='1'] *,
+html[data-export='1'] *::before,
+html[data-export='1'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+html[data-export='1'] .bg-void {
+  background-color: transparent !important;
+}
+
+html[data-export='1'] [data-export-hide] {
+  visibility: hidden !important;
+}
+
+html[data-export='1'][data-export-section='hero'] [data-export-section-root]:not([data-export-section-root='hero']),
+html[data-export='1'][data-export-section='product'] [data-export-section-root]:not([data-export-section-root='product']),
+html[data-export='1'][data-export-section='live'] [data-export-section-root]:not([data-export-section-root='live']),
+html[data-export='1'][data-export-section='footer'] [data-export-section-root]:not([data-export-section-root='footer']),
+html[data-export='1'][data-export-section='header'] [data-export-section-root]:not([data-export-section-root='header']) {
+  display: none !important;
+}
+
+html[data-export='1'][data-export-solo] [data-export-layer] {
+  visibility: hidden !important;
+}
+
+html[data-export='1'][data-export-solo] [data-export-layer].export-solo-active {
+  visibility: visible !important;
+}

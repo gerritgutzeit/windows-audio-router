@@ -10,6 +10,7 @@ import {
 import { Check, Search, Terminal } from 'lucide-react'
 import { useRef, useState } from 'react'
 import screenshot from '../assets/images/Screenshot.png'
+import { useExportMode, EXPORT_REST } from '../lib/exportMode'
 
 const BEATS = [
   {
@@ -37,7 +38,6 @@ function useBeatIndex(progress: MotionValue<number>, reduceMotion: boolean) {
 
   useMotionValueEvent(progress, 'change', (v) => {
     if (reduceMotion) return
-    // First beat gets more scroll room for the showcase
     if (v < 0.45) setBeat(0)
     else if (v < 0.72) setBeat(1)
     else setBeat(2)
@@ -49,8 +49,8 @@ function useBeatIndex(progress: MotionValue<number>, reduceMotion: boolean) {
 function DashboardShowcase({ reduceMotion }: { reduceMotion: boolean }) {
   return (
     <div className="relative mx-auto w-full max-w-[1200px] px-2 sm:px-4">
-      {/* Ambient glow behind window */}
       <motion.div
+        data-export-layer="product-ambient-glow"
         className="pointer-events-none absolute -inset-[8%] rounded-[3rem] bg-accent/20 blur-[80px]"
         aria-hidden
         animate={
@@ -65,6 +65,7 @@ function DashboardShowcase({ reduceMotion }: { reduceMotion: boolean }) {
       />
 
       <motion.div
+        data-export-layer="product-visual"
         className="relative origin-center"
         style={{ perspective: 1600 }}
         initial={
@@ -124,6 +125,7 @@ function DashboardShowcase({ reduceMotion }: { reduceMotion: boolean }) {
 function TrayPreview() {
   return (
     <motion.div
+      data-export-layer="product-visual"
       className="mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-[#141416]/95 p-5 shadow-2xl"
       initial={{ opacity: 0, scale: 0.94, y: 24 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -150,7 +152,10 @@ function TrayPreview() {
 
 function AutomatePreview() {
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
+    <div
+      data-export-layer="product-visual"
+      className="mx-auto flex w-full max-w-lg flex-col gap-4"
+    >
       <motion.div
         className="rounded-2xl metal-panel p-6"
         initial={{ opacity: 0, y: 20 }}
@@ -180,15 +185,16 @@ function AutomatePreview() {
 
 export function ProductStage() {
   const ref = useRef<HTMLElement>(null)
-  const reduceMotion = !!useReducedMotion()
+  const exportMode = useExportMode()
+  const reduceMotion = !!useReducedMotion() || exportMode.enabled
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end end'],
   })
-  const beat = useBeatIndex(scrollYProgress, reduceMotion)
+  const scrollBeat = useBeatIndex(scrollYProgress, reduceMotion)
+  const beat = exportMode.enabled ? exportMode.beat : scrollBeat
   const copy = BEATS[beat]
 
-  // Subtle depth on the whole pin while scrolling through beat 0
   const showcaseScale = useTransform(scrollYProgress, [0, 0.35], [1, 1.03])
   const overlayOpacity = useTransform(scrollYProgress, [0, 0.12, 0.4], [0, 1, 1])
 
@@ -196,25 +202,36 @@ export function ProductStage() {
     <section
       id="product"
       ref={ref}
-      className="relative h-[320svh] bg-void"
+      className={`relative ${exportMode.enabled ? 'h-[100svh]' : 'h-[320svh]'} ${exportMode.enabled ? 'bg-transparent' : 'bg-void'}`}
       aria-label="Product stages"
+      data-export-section-root="product"
     >
-      <div className="stage-pin overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(181,154,109,0.12),transparent_55%)]" />
+      <div className="stage-pin overflow-hidden" data-export-frame="product">
+        <div
+          data-export-layer="product-radial"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(181,154,109,0.12),transparent_55%)]"
+        />
 
         <AnimatePresence mode="wait">
           {beat === 0 ? (
             <motion.div
               key="showcase"
               className="relative z-10 flex h-full min-h-[100svh] w-full flex-col justify-center py-20"
-              initial={{ opacity: 0 }}
+              initial={exportMode.enabled ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -24 }}
               transition={{ duration: 0.4 }}
             >
               <motion.div
+                data-export-layer="product-copy"
                 className="mx-auto mb-6 max-w-3xl px-4 text-center sm:mb-8 sm:px-6"
-                style={reduceMotion ? undefined : { opacity: overlayOpacity }}
+                style={
+                  exportMode.enabled
+                    ? EXPORT_REST
+                    : reduceMotion
+                      ? undefined
+                      : { opacity: overlayOpacity }
+                }
               >
                 <p className="text-[11px] font-medium tracking-[0.14em] text-accent-bright uppercase">
                   {copy.kicker}
@@ -226,7 +243,13 @@ export function ProductStage() {
 
               <motion.div
                 className="w-full"
-                style={reduceMotion ? undefined : { scale: showcaseScale }}
+                style={
+                  exportMode.enabled
+                    ? EXPORT_REST
+                    : reduceMotion
+                      ? undefined
+                      : { scale: showcaseScale }
+                }
               >
                 <DashboardShowcase reduceMotion={reduceMotion} />
               </motion.div>
@@ -235,12 +258,12 @@ export function ProductStage() {
             <motion.div
               key={`beat-${beat}`}
               className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-24 sm:px-6 lg:grid-cols-2 lg:gap-16"
-              initial={{ opacity: 0, y: 28 }}
+              initial={exportMode.enabled ? false : { opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div>
+              <div data-export-layer="product-copy">
                 <p className="text-xs font-medium tracking-[0.14em] text-accent-bright uppercase">
                   {copy.kicker}
                 </p>
@@ -256,7 +279,10 @@ export function ProductStage() {
           )}
         </AnimatePresence>
 
-        <div className="absolute inset-x-0 bottom-8 z-20 mx-auto flex max-w-xs gap-2 px-4">
+        <div
+          data-export-layer="product-beat-dots"
+          className="absolute inset-x-0 bottom-8 z-20 mx-auto flex max-w-xs gap-2 px-4"
+        >
           {BEATS.map((b, i) => (
             <span
               key={b.id}

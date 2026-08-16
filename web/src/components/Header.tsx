@@ -2,27 +2,36 @@ import { Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import appIcon from '../assets/images/app.png'
 import { DOWNLOAD_URL, NAV_LINKS } from '../lib/constants'
+import { useExportMode } from '../lib/exportMode'
 import { Button } from './ui/Button'
 
 export function Header() {
+  const exportMode = useExportMode()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
+    if (exportMode.enabled) {
+      setScrolled(true)
+      return
+    }
     const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [exportMode.enabled])
 
   return (
     <header
+      data-export-frame="header"
+      data-export-section-root="header"
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
         scrolled ? 'py-2' : 'py-4'
       }`}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div
+          data-export-layer="header-nav"
           className={`flex items-center justify-between gap-4 rounded-2xl px-3 py-2 transition-all duration-500 sm:px-4 ${
             scrolled
               ? 'border border-white/10 bg-void/75 shadow-[0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl'

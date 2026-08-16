@@ -1,4 +1,4 @@
-![AudioPresetSwitcher Header](docs/images/header.jpg)
+![AudioPresetSwitcher Header](docs/images/header.png)
 # AudioPresetSwitcher
 
 Windows 11 system-tray app that switches default playback and recording devices with one click. Presets are edited in a Fluent dashboard — never in a JSON file.

@@ -5,11 +5,13 @@ import {
   useTransform,
 } from 'framer-motion'
 import { useRef } from 'react'
+import { useExportMode, EXPORT_REST } from '../lib/exportMode'
 import { LiveStatusCard } from './LiveMeterMock'
 
 export function LiveStage() {
   const ref = useRef<HTMLElement>(null)
-  const reduceMotion = useReducedMotion()
+  const exportMode = useExportMode()
+  const reduceMotion = !!useReducedMotion() || exportMode.enabled
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start end', 'end start'],
@@ -25,19 +27,26 @@ export function LiveStage() {
     <section
       id="live"
       ref={ref}
-      className="relative min-h-[160svh] bg-void"
+      className={`relative ${exportMode.enabled ? 'h-[100svh] bg-transparent' : 'min-h-[160svh] bg-void'}`}
       aria-label="Live meters"
+      data-export-section-root="live"
     >
-      <div className="stage-pin">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,rgba(181,154,109,0.1),transparent_55%)]" />
+      <div className="stage-pin" data-export-frame="live">
+        <div
+          data-export-layer="live-radial"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,rgba(181,154,109,0.1),transparent_55%)]"
+        />
 
         <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center gap-12 px-4 py-24 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
           <motion.div
+            data-export-layer="live-copy"
             className="max-w-md text-center lg:text-left"
             style={
-              reduceMotion
-                ? undefined
-                : { y: textY, opacity: textOpacity }
+              exportMode.enabled
+                ? EXPORT_REST
+                : reduceMotion
+                  ? undefined
+                  : { y: textY, opacity: textOpacity }
             }
           >
             <p className="text-xs font-medium tracking-[0.14em] text-accent-bright uppercase">
@@ -54,16 +63,21 @@ export function LiveStage() {
           <motion.div
             className="relative w-full max-w-md"
             style={
-              reduceMotion
-                ? undefined
-                : { y: cardY, scale: cardScale, opacity: cardOpacity }
+              exportMode.enabled
+                ? EXPORT_REST
+                : reduceMotion
+                  ? undefined
+                  : { y: cardY, scale: cardScale, opacity: cardOpacity }
             }
           >
             <div
+              data-export-layer="live-glow"
               className="pointer-events-none absolute -inset-8 rounded-[2rem] bg-accent/15 blur-3xl"
               aria-hidden
             />
-            <LiveStatusCard className="relative shadow-[0_30px_80px_rgba(0,0,0,0.5)]" />
+            <div data-export-layer="live-card">
+              <LiveStatusCard className="relative shadow-[0_30px_80px_rgba(0,0,0,0.5)]" />
+            </div>
           </motion.div>
         </div>
       </div>

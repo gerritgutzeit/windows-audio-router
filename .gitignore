@@ -60,3 +60,4 @@ settings.json
 ## Web (landing page)
 web/node_modules/
 web/dist/
+web/exports/

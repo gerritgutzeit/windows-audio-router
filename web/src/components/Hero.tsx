@@ -7,6 +7,7 @@ import {
 import { ChevronDown, Download } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import appIcon from '../assets/images/app.png'
+import { useExportMode, EXPORT_REST } from '../lib/exportMode'
 import { DOWNLOAD_URL, REPO_URL } from '../lib/constants'
 import { Button } from './ui/Button'
 
@@ -17,7 +18,8 @@ const FALLBACK_BG = '#080809'
 export function Hero() {
   const ref = useRef<HTMLElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const reduceMotion = useReducedMotion()
+  const exportMode = useExportMode()
+  const reduceMotion = !!useReducedMotion() || exportMode.enabled
   const [videoFailed, setVideoFailed] = useState(false)
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -31,6 +33,7 @@ export function Hero() {
   const fadeOut = useTransform(scrollYProgress, [0.6, 1], [0, 1])
 
   useEffect(() => {
+    if (exportMode.enabled) return
     const el = videoRef.current
     if (!el || videoFailed) return
 
@@ -47,13 +50,11 @@ export function Hero() {
       void el.play().catch(() => undefined)
     }
 
-    // Some MP4s don't loop cleanly — restart manually
     const onEnded = () => {
       el.currentTime = 0
       tryPlay()
     }
 
-    // Resume if the browser pauses while the hero is still on screen
     const onVisibility = () => {
       if (document.visibilityState === 'visible') tryPlay()
     }
@@ -84,17 +85,22 @@ export function Hero() {
       document.removeEventListener('visibilitychange', onVisibility)
       observer.disconnect()
     }
-  }, [reduceMotion, videoFailed])
+  }, [reduceMotion, videoFailed, exportMode.enabled])
 
   return (
     <section
       id="top"
       ref={ref}
-      className="relative h-[165svh]"
+      className={`relative ${exportMode.enabled ? 'h-[100svh]' : 'h-[165svh]'}`}
       aria-label="Hero"
+      data-export-section-root="hero"
     >
-      <div className="stage-pin">
-        <div className="absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="stage-pin" data-export-frame="hero">
+        <div
+          className="absolute inset-0 overflow-hidden"
+          aria-hidden
+          data-export-hide
+        >
           <motion.div
             className="absolute inset-0"
             style={
@@ -103,7 +109,7 @@ export function Hero() {
                 : { y: mediaY, scale: mediaScale, backgroundColor: FALLBACK_BG }
             }
           >
-            {!videoFailed && (
+            {!videoFailed && !exportMode.enabled && (
               <video
                 ref={videoRef}
                 className="absolute inset-0 h-full w-full object-cover object-center"
@@ -119,24 +125,36 @@ export function Hero() {
                 <source src={VIDEO_MP4} type="video/mp4" />
               </video>
             )}
-            {/* Keep left open for video; shade the copy side */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-void/35 to-void/85" />
-            <div className="absolute inset-0 bg-gradient-to-b from-void/30 via-transparent to-void" />
           </motion.div>
         </div>
 
-        <motion.div
-          className="pointer-events-none absolute inset-0 bg-void"
-          style={reduceMotion ? undefined : { opacity: fadeOut }}
-          aria-hidden
-        />
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div
+            data-export-layer="hero-overlay-horizontal"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-void/35 to-void/85"
+          />
+          <div
+            data-export-layer="hero-overlay-vertical"
+            className="absolute inset-0 bg-gradient-to-b from-void/30 via-transparent to-void"
+          />
+        </div>
+
+        {!exportMode.enabled && (
+          <motion.div
+            className="pointer-events-none absolute inset-0 bg-void"
+            style={reduceMotion ? undefined : { opacity: fadeOut }}
+            aria-hidden
+          />
+        )}
 
         <motion.div
           className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-6xl items-center justify-end px-4 py-28 sm:px-6 lg:px-8"
           style={
-            reduceMotion
-              ? undefined
-              : { y: contentY, opacity: contentOpacity }
+            exportMode.enabled
+              ? EXPORT_REST
+              : reduceMotion
+                ? undefined
+                : { y: contentY, opacity: contentOpacity }
           }
         >
           <div className="flex w-full max-w-xl flex-col items-end text-right">
@@ -145,6 +163,7 @@ export function Hero() {
               alt="AudioPresetSwitcher"
               width={112}
               height={112}
+              data-export-layer="hero-icon"
               className="app-icon h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
               initial={reduceMotion ? false : { opacity: 0, x: 28, scale: 0.92 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -152,6 +171,7 @@ export function Hero() {
             />
 
             <motion.p
+              data-export-layer="hero-eyebrow"
               className="mt-7 text-[11px] font-medium tracking-[0.14em] text-white/55 uppercase sm:text-xs"
               initial={reduceMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -161,6 +181,7 @@ export function Hero() {
             </motion.p>
 
             <motion.h1
+              data-export-layer="hero-title"
               className="title-display mt-3 w-full text-[2.45rem] leading-[1.05] sm:text-5xl md:text-[3.75rem] md:leading-[1.02]"
               initial={reduceMotion ? false : { opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -172,6 +193,7 @@ export function Hero() {
             </motion.h1>
 
             <motion.p
+              data-export-layer="hero-subtitle"
               className="mt-5 max-w-sm text-base leading-relaxed text-muted sm:text-lg"
               initial={reduceMotion ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -181,6 +203,7 @@ export function Hero() {
             </motion.p>
 
             <motion.div
+              data-export-layer="hero-ctas"
               className="pointer-events-auto mt-8 flex flex-col items-end gap-3 sm:flex-row sm:items-center sm:justify-end"
               initial={reduceMotion ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -205,6 +228,7 @@ export function Hero() {
 
         <a
           href="#product"
+          data-export-layer="hero-scroll-cue"
           className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-[10px] tracking-[0.2em] text-muted uppercase transition-colors hover:text-white"
         >
           Scroll

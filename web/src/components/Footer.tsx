@@ -3,6 +3,7 @@ import { Download } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import appIcon from '../assets/images/app.png'
 import { DOWNLOAD_URL, REPO_URL } from '../lib/constants'
+import { useExportMode } from '../lib/exportMode'
 import { Button } from './ui/Button'
 
 const VIDEO_WEBM = `${import.meta.env.BASE_URL}background.webm`
@@ -24,13 +25,15 @@ function useCanHover() {
 }
 
 export function Footer() {
-  const reduceMotion = useReducedMotion()
+  const exportMode = useExportMode()
+  const reduceMotion = !!useReducedMotion() || exportMode.enabled
   const canHover = useCanHover()
   const videoRef = useRef<HTMLVideoElement>(null)
   const hoveringRef = useRef(false)
   const [videoFailed, setVideoFailed] = useState(false)
 
   useEffect(() => {
+    if (exportMode.enabled) return
     const el = videoRef.current
     if (!el || videoFailed) return
 
@@ -39,7 +42,6 @@ export function Footer() {
       return
     }
 
-    // Mobile / touch: continuous loop
     if (!canHover) {
       el.loop = true
       const play = () => {
@@ -50,12 +52,11 @@ export function Footer() {
       return () => el.removeEventListener('canplay', play)
     }
 
-    // Desktop: start paused on first frame until hover
     hoveringRef.current = false
     el.loop = false
     el.pause()
     el.currentTime = 0
-  }, [reduceMotion, videoFailed, canHover])
+  }, [reduceMotion, videoFailed, canHover, exportMode.enabled])
 
   const playWhileHovered = () => {
     const el = videoRef.current
@@ -69,7 +70,6 @@ export function Footer() {
     const el = videoRef.current
     if (!el || !canHover) return
     hoveringRef.current = false
-    // Disable loop so the current playthrough can reach the end / first frame
     el.loop = false
   }
 
@@ -86,11 +86,23 @@ export function Footer() {
   }
 
   return (
-    <footer id="get" className="relative overflow-hidden px-4 pb-10 pt-8 sm:px-6">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_0%,rgba(181,154,109,0.1),transparent_55%)]" />
+    <footer
+      id="get"
+      className="relative overflow-hidden px-4 pb-10 pt-8 sm:px-6"
+      data-export-section-root="footer"
+    >
+      <div
+        data-export-hide
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_30%_0%,rgba(181,154,109,0.1),transparent_55%)]"
+      />
 
       <motion.div
-        className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-accent/25 shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+        data-export-frame="footer"
+        className={`relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] ${
+          exportMode.enabled
+            ? ''
+            : 'border border-accent/25 shadow-[0_30px_80px_rgba(0,0,0,0.55)]'
+        }`}
         initial={reduceMotion ? false : { opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-10%' }}
@@ -98,12 +110,14 @@ export function Footer() {
       >
         <div
           className="relative overflow-hidden"
-          style={{ backgroundColor: PANEL_BG }}
+          style={{
+            backgroundColor: exportMode.enabled ? 'transparent' : PANEL_BG,
+          }}
           onMouseEnter={playWhileHovered}
           onMouseLeave={finishCycleOnLeave}
         >
           <div className="absolute inset-0 overflow-hidden" aria-hidden>
-            {!videoFailed && (
+            {!videoFailed && !exportMode.enabled && (
               <video
                 ref={videoRef}
                 className="absolute inset-y-0 left-0 h-full w-[72%] max-w-none scale-105 object-cover object-center sm:w-[64%]"
@@ -127,6 +141,7 @@ export function Footer() {
             )}
 
             <div
+              data-export-layer="footer-mask-gradient"
               className="absolute inset-0"
               style={{
                 background: `linear-gradient(
@@ -142,10 +157,14 @@ export function Footer() {
               }}
             />
 
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_58%_45%,rgba(181,154,109,0.1),transparent_55%)]" />
+            <div
+              data-export-layer="footer-gold-radial"
+              className="absolute inset-0 bg-[radial-gradient(ellipse_at_58%_45%,rgba(181,154,109,0.1),transparent_55%)]"
+            />
           </div>
 
           <div
+            data-export-layer="footer-ring"
             className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-accent/15"
             aria-hidden
           />
@@ -157,15 +176,25 @@ export function Footer() {
                 alt=""
                 width={64}
                 height={64}
+                data-export-layer="footer-icon"
                 className="app-icon h-14 w-14 sm:h-16 sm:w-16"
               />
-              <h2 className="title-display mt-6 text-4xl sm:text-5xl">
+              <h2
+                data-export-layer="footer-title"
+                className="title-display mt-6 text-4xl sm:text-5xl"
+              >
                 Ready to Switch?
               </h2>
-              <p className="mt-4 max-w-sm text-muted">
+              <p
+                data-export-layer="footer-body"
+                className="mt-4 max-w-sm text-muted"
+              >
                 Native Windows app. Tray, dashboard, CLI — one installer.
               </p>
-              <div className="mt-8 flex flex-col items-end gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <div
+                data-export-layer="footer-ctas"
+                className="mt-8 flex flex-col items-end gap-3 sm:flex-row sm:items-center sm:justify-end"
+              >
                 <a
                   href={`${REPO_URL}/blob/main/README.md`}
                   className="order-2 text-sm text-muted transition-colors hover:text-white sm:order-1"
@@ -184,7 +213,10 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 bg-[#0c0c0e] px-6 py-5 text-xs text-muted sm:flex-row sm:px-10">
+        <div
+          data-export-layer="footer-meta"
+          className="relative z-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 bg-[#0c0c0e] px-6 py-5 text-xs text-muted sm:flex-row sm:px-10"
+        >
           <p>C# · .NET 8 · WPF-UI · Velopack</p>
           <div className="flex gap-4">
             <a href={REPO_URL} className="hover:text-white">
