@@ -6,13 +6,13 @@ using NAudio.CoreAudioApi;
 
 namespace AudioPresetSwitcher.Services;
 
-public sealed class AudioDeviceService : IDisposable
+public sealed class AudioDeviceService : IAudioDeviceService
 {
     private readonly MMDeviceEnumerator _enumerator = new();
     private readonly AudioNotificationClient _notificationClient = new();
     private readonly object _gate = new();
     private readonly List<MMDevice> _cached = [];
-    private readonly DispatcherTimer _debounce = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    private readonly DispatcherTimer _debounce = new() { Interval = AppTiming.DeviceChangeDebounce };
     private bool _disposed;
 
     public AudioDeviceService()
@@ -48,27 +48,8 @@ public sealed class AudioDeviceService : IDisposable
             return _cached.Select(device =>
             {
                 var isRender = device.DataFlow == DataFlow.Render;
-                var volume = 0f;
-                var muted = false;
-                var peak = 0f;
-                try
-                {
-                    volume = device.AudioEndpointVolume.MasterVolumeLevelScalar;
-                    muted = device.AudioEndpointVolume.Mute;
-                }
-                catch
-                {
-                    // Some endpoints do not expose volume.
-                }
-
-                try
-                {
-                    peak = device.AudioMeterInformation.MasterPeakValue;
-                }
-                catch
-                {
-                    // Some endpoints do not expose meters.
-                }
+                TryReadVolume(device, out var volume, out var muted);
+                TryReadPeak(device, out var peak);
 
                 return new LiveDeviceInfo
                 {
@@ -95,14 +76,8 @@ public sealed class AudioDeviceService : IDisposable
                 return 0f;
             }
 
-            try
-            {
-                return device.AudioMeterInformation.MasterPeakValue;
-            }
-            catch
-            {
-                return 0f;
-            }
+            TryReadPeak(device, out var peak);
+            return peak;
         }
     }
 
@@ -132,53 +107,21 @@ public sealed class AudioDeviceService : IDisposable
             recording = MatchDevice(preset.RecordingKeyword, _cached.Where(d => d.DataFlow == DataFlow.Capture), DataFlow.Capture);
         }
 
-        var playbackSkipped = string.IsNullOrWhiteSpace(preset.PlaybackKeyword);
-        var recordingSkipped = string.IsNullOrWhiteSpace(preset.RecordingKeyword);
+        TryActivateEndpoint(
+            preset.PlaybackKeyword,
+            playback,
+            "playback",
+            out var playbackSkipped,
+            out var playbackOk,
+            out var playbackError);
 
-        var playbackOk = playbackSkipped;
-        var recordingOk = recordingSkipped;
-        string? playbackError = null;
-        string? recordingError = null;
-
-        if (!playbackSkipped)
-        {
-            if (playback is null)
-            {
-                playbackError = $"playback device not found for \"{preset.PlaybackKeyword}\"";
-            }
-            else
-            {
-                try
-                {
-                    SetAllRoles(playback.ID);
-                    playbackOk = true;
-                }
-                catch (Exception ex)
-                {
-                    playbackError = $"could not set playback device: {ex.Message}";
-                }
-            }
-        }
-
-        if (!recordingSkipped)
-        {
-            if (recording is null)
-            {
-                recordingError = $"recording device not found for \"{preset.RecordingKeyword}\"";
-            }
-            else
-            {
-                try
-                {
-                    SetAllRoles(recording.ID);
-                    recordingOk = true;
-                }
-                catch (Exception ex)
-                {
-                    recordingError = $"could not set recording device: {ex.Message}";
-                }
-            }
-        }
+        TryActivateEndpoint(
+            preset.RecordingKeyword,
+            recording,
+            "recording",
+            out var recordingSkipped,
+            out var recordingOk,
+            out var recordingError);
 
         var result = new PresetActivationResult
         {
@@ -298,55 +241,8 @@ public sealed class AudioDeviceService : IDisposable
         }
     }
 
-    private MMDevice? MatchDevice(string? keyword, IEnumerable<MMDevice> devices, DataFlow flow)
-    {
-        if (string.IsNullOrWhiteSpace(keyword))
-        {
-            return null;
-        }
-
-        var term = keyword.Trim();
-        var candidates = devices
-            .Where(d => d.FriendlyName.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        if (candidates.Count == 0)
-        {
-            return null;
-        }
-
-        if (candidates.Count == 1)
-        {
-            return candidates[0];
-        }
-
-        var ranked = candidates
-            .Select(device => new
-            {
-                Device = device,
-                Exact = device.FriendlyName.Equals(term, StringComparison.OrdinalIgnoreCase),
-                Score = term.Length / (double)Math.Max(device.FriendlyName.Length, 1)
-            })
-            .OrderByDescending(x => x.Exact)
-            .ThenByDescending(x => x.Score)
-            .ThenBy(x => x.Device.FriendlyName.Length)
-            .ToList();
-
-        var top = ranked[0];
-        var tied = ranked
-            .Where(x => x.Exact == top.Exact && Math.Abs(x.Score - top.Score) < 0.0001)
-            .ToList();
-        if (tied.Count > 1)
-        {
-            var defaultId = SafeDefault(flow, Role.Multimedia);
-            var preferred = tied.FirstOrDefault(x => x.Device.ID == defaultId);
-            if (preferred is not null)
-            {
-                return preferred.Device;
-            }
-        }
-
-        return top.Device;
-    }
+    private MMDevice? MatchDevice(string? keyword, IEnumerable<MMDevice> devices, DataFlow flow) =>
+        DeviceKeywordMatcher.Match(keyword, devices, SafeDefault, flow);
 
     private string? SafeDefault(DataFlow flow, Role role)
     {
@@ -358,6 +254,68 @@ public sealed class AudioDeviceService : IDisposable
         catch
         {
             return null;
+        }
+    }
+
+    private static void TryActivateEndpoint(
+        string? keyword,
+        MMDevice? device,
+        string kind,
+        out bool skipped,
+        out bool ok,
+        out string? error)
+    {
+        skipped = string.IsNullOrWhiteSpace(keyword);
+        ok = skipped;
+        error = null;
+
+        if (skipped)
+        {
+            return;
+        }
+
+        if (device is null)
+        {
+            error = $"{kind} device not found for \"{keyword}\"";
+            return;
+        }
+
+        try
+        {
+            SetAllRoles(device.ID);
+            ok = true;
+        }
+        catch (Exception ex)
+        {
+            error = $"could not set {kind} device: {ex.Message}";
+        }
+    }
+
+    private static void TryReadVolume(MMDevice device, out float volume, out bool muted)
+    {
+        volume = 0f;
+        muted = false;
+        try
+        {
+            volume = device.AudioEndpointVolume.MasterVolumeLevelScalar;
+            muted = device.AudioEndpointVolume.Mute;
+        }
+        catch
+        {
+            // Some endpoints do not expose volume.
+        }
+    }
+
+    private static void TryReadPeak(MMDevice device, out float peak)
+    {
+        peak = 0f;
+        try
+        {
+            peak = device.AudioMeterInformation.MasterPeakValue;
+        }
+        catch
+        {
+            // Some endpoints do not expose meters.
         }
     }
 

@@ -4,7 +4,7 @@ using AudioPresetSwitcher.Views.Windows;
 
 namespace AudioPresetSwitcher.Services;
 
-public sealed class WindowService
+public sealed class WindowService : IWindowService
 {
     private MainWindow? _window;
 

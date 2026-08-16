@@ -1,14 +1,8 @@
 using System.Windows;
 using System.Windows.Threading;
 using AudioPresetSwitcher.Services;
-using AudioPresetSwitcher.ViewModels.Pages;
-using AudioPresetSwitcher.ViewModels.Windows;
-using AudioPresetSwitcher.Views.Pages;
-using AudioPresetSwitcher.Views.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Wpf.Ui;
-using Wpf.Ui.DependencyInjection;
 
 namespace AudioPresetSwitcher;
 
@@ -33,39 +27,9 @@ public partial class App
             return;
         }
 
-        _host = Microsoft.Extensions.Hosting.Host
+        _host = Host
             .CreateDefaultBuilder()
-            .ConfigureServices((_, services) =>
-            {
-                services.AddSingleton(options);
-                services.AddNavigationViewPageProvider();
-                services.AddSingleton<INavigationService, NavigationService>();
-                services.AddSingleton<ISnackbarService, SnackbarService>();
-                services.AddSingleton<IContentDialogService, ContentDialogService>();
-
-                services.AddSingleton<SettingsService>();
-                services.AddSingleton<AudioDeviceService>();
-                services.AddSingleton<ShortcutService>();
-                services.AddSingleton<NotificationService>();
-                services.AddSingleton<ThemeSettingsService>();
-                services.AddSingleton<StartupService>();
-                services.AddSingleton<UpdateService>();
-                services.AddSingleton<WindowService>();
-                services.AddSingleton<TrayService>();
-                services.AddSingleton<IpcService>();
-                services.AddHostedService(sp => sp.GetRequiredService<IpcService>());
-                services.AddHostedService<ApplicationHostService>();
-
-                services.AddSingleton<MainWindowViewModel>();
-                services.AddSingleton<CurrentAudioStatusViewModel>();
-                services.AddSingleton<MainWindow>();
-                services.AddSingleton<PresetsViewModel>();
-                services.AddSingleton<PresetsPage>();
-                services.AddSingleton<DevicesViewModel>();
-                services.AddSingleton<DevicesPage>();
-                services.AddSingleton<SettingsViewModel>();
-                services.AddSingleton<SettingsPage>();
-            })
+            .ConfigureServices((_, services) => services.AddAudioPresetSwitcher(options))
             .Build();
 
         await _host.StartAsync();
@@ -98,7 +62,7 @@ public partial class App
         {
             var logDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "AudioPresetSwitcher");
+                AppIdentity.Name);
             Directory.CreateDirectory(logDir);
             File.AppendAllText(
                 Path.Combine(logDir, "error.log"),
@@ -111,7 +75,7 @@ public partial class App
 
         try
         {
-            GetRequiredService<NotificationService>().Show("AudioPresetSwitcher", e.Exception.Message);
+            GetRequiredService<INotificationService>().Show(AppIdentity.Name, e.Exception.Message);
         }
         catch
         {

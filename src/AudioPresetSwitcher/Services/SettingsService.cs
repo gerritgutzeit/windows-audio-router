@@ -4,7 +4,7 @@ using AudioPresetSwitcher.Models;
 
 namespace AudioPresetSwitcher.Services;
 
-public sealed class SettingsService
+public sealed class SettingsService : ISettingsService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -22,7 +22,7 @@ public sealed class SettingsService
     {
         var folder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "AudioPresetSwitcher");
+            AppIdentity.Name);
         Directory.CreateDirectory(folder);
         _filePath = Path.Combine(folder, "settings.json");
         Current = Load();

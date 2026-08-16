@@ -1,6 +1,3 @@
-using System.Windows;
-using System.Windows.Threading;
-using AudioPresetSwitcher.Models;
 using AudioPresetSwitcher.Services;
 using NAudio.CoreAudioApi;
 
@@ -8,17 +5,14 @@ namespace AudioPresetSwitcher.ViewModels.Pages;
 
 public partial class DevicesViewModel : ObservableObject, IDisposable
 {
-    private readonly AudioDeviceService _audio;
-    private readonly DispatcherTimer _timer;
+    private readonly IAudioDeviceService _audio;
+    private readonly LiveAudioMeterHost _meterHost;
 
-    public DevicesViewModel(AudioDeviceService audio)
+    public DevicesViewModel(IAudioDeviceService audio)
     {
         _audio = audio;
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
-        _timer.Tick += (_, _) => RefreshPeaks();
-        _audio.DevicesChanged += OnDevicesChanged;
-        Reload();
-        _timer.Start();
+        _meterHost = new LiveAudioMeterHost(audio, Reload, RefreshPeaks);
+        _meterHost.Start();
     }
 
     [ObservableProperty]
@@ -27,16 +21,7 @@ public partial class DevicesViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private ObservableCollection<LiveDeviceCardViewModel> _recordingDevices = [];
 
-    public void Dispose()
-    {
-        _timer.Stop();
-        _audio.DevicesChanged -= OnDevicesChanged;
-    }
-
-    private void OnDevicesChanged(object? sender, EventArgs e)
-    {
-        Application.Current?.Dispatcher.BeginInvoke(Reload);
-    }
+    public void Dispose() => _meterHost.Dispose();
 
     private void Reload()
     {
@@ -51,7 +36,7 @@ public partial class DevicesViewModel : ObservableObject, IDisposable
     {
         foreach (var device in PlaybackDevices.Concat(RecordingDevices))
         {
-            device.Peak = _audio.GetPeak(device.Id) * 100d;
+            device.Peak = LiveAudioMeterHost.ToPercent(_audio.GetPeak(device.Id));
         }
     }
 }

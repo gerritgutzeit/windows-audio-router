@@ -6,8 +6,11 @@ using Wpf.Ui.Controls;
 
 namespace AudioPresetSwitcher.Services;
 
-public sealed class ThemeSettingsService
+public sealed class ThemeSettingsService : IThemeSettingsService
 {
+    private const byte AccentSecondaryAlpha = 0xE5;
+    private const byte AccentTertiaryAlpha = 0xCC;
+
     private bool _applying;
     private AppThemeMode _mode = AppThemeMode.System;
 
@@ -81,15 +84,36 @@ public sealed class ThemeSettingsService
             return;
         }
 
+        ApplyAccentColorKeys(resources, brass, primary, secondary, tertiary);
+        ApplyAccentBrushKeys(resources, brass, primary, secondary, tertiary);
+        ApplyBackground(resources, theme);
+    }
+
+    private static void ApplyAccentColorKeys(
+        ResourceDictionary resources,
+        Color brass,
+        Color primary,
+        Color secondary,
+        Color tertiary)
+    {
         // Color keys that DynamicResource brushes (AccentButtonBackground, nav pill, etc.) resolve.
         SetColor(resources, "SystemAccentColor", brass);
         SetColor(resources, "SystemAccentColorPrimary", primary);
         SetColor(resources, "SystemAccentColorSecondary", secondary);
         SetColor(resources, "SystemAccentColorTertiary", tertiary);
         SetColor(resources, "AccentFillColorDefault", secondary);
-        SetColor(resources, "AccentFillColorSecondary", Color.FromArgb(0xE5, secondary.R, secondary.G, secondary.B));
-        SetColor(resources, "AccentFillColorTertiary", Color.FromArgb(0xCC, secondary.R, secondary.G, secondary.B));
+        SetColor(resources, "AccentFillColorSecondary", WithAlpha(secondary, AccentSecondaryAlpha));
+        SetColor(resources, "AccentFillColorTertiary", WithAlpha(secondary, AccentTertiaryAlpha));
+        SetColor(resources, "TextOnAccentFillColorPrimary", Colors.Black);
+    }
 
+    private static void ApplyAccentBrushKeys(
+        ResourceDictionary resources,
+        Color brass,
+        Color primary,
+        Color secondary,
+        Color tertiary)
+    {
         // Brush keys — replace StaticResource-bound brushes from Accent.xaml that never update.
         SetBrush(resources, "SystemAccentBrush", brass);
         SetBrush(resources, "SystemAccentColorBrush", brass);
@@ -105,15 +129,15 @@ public sealed class ThemeSettingsService
         SetBrush(resources, "AccentTextFillColorSecondaryBrush", tertiary);
         SetBrush(resources, "AccentTextFillColorTertiaryBrush", primary);
         SetBrush(resources, "AccentButtonBackground", secondary);
-        SetBrush(resources, "AccentButtonBackgroundPointerOver", Color.FromArgb(0xE5, secondary.R, secondary.G, secondary.B));
-        SetBrush(resources, "AccentButtonBackgroundPressed", Color.FromArgb(0xCC, secondary.R, secondary.G, secondary.B));
+        SetBrush(resources, "AccentButtonBackgroundPointerOver", WithAlpha(secondary, AccentSecondaryAlpha));
+        SetBrush(resources, "AccentButtonBackgroundPressed", WithAlpha(secondary, AccentTertiaryAlpha));
         SetBrush(resources, "NavigationViewSelectionIndicatorForeground", primary);
-
-        // Brass is light enough for dark label text on accent fills.
-        SetColor(resources, "TextOnAccentFillColorPrimary", Colors.Black);
         SetBrush(resources, "AccentButtonForeground", Colors.Black);
         SetBrush(resources, "AccentButtonForegroundPointerOver", Colors.Black);
+    }
 
+    private static void ApplyBackground(ResourceDictionary resources, ApplicationTheme theme)
+    {
         if (theme == ApplicationTheme.Dark)
         {
             SetBrush(resources, "ApplicationBackgroundBrush", StudioPalette.DarkBackground);
@@ -123,6 +147,9 @@ public sealed class ThemeSettingsService
             resources.Remove("ApplicationBackgroundBrush");
         }
     }
+
+    private static Color WithAlpha(Color color, byte alpha) =>
+        Color.FromArgb(alpha, color.R, color.G, color.B);
 
     private static void SetColor(ResourceDictionary resources, string key, Color color) =>
         resources[key] = color;

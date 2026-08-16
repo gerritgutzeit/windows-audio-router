@@ -6,7 +6,7 @@ public sealed class AudioPreset
 
     public string Name { get; set; } = "New preset";
 
-    public string Icon { get; set; } = "Headphones";
+    public PresetIcon Icon { get; set; } = PresetIcon.Headphones;
 
     public string PlaybackKeyword { get; set; } = string.Empty;
 

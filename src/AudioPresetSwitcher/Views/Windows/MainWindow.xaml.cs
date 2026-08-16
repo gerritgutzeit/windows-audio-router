@@ -11,11 +11,11 @@ namespace AudioPresetSwitcher.Views.Windows;
 
 public partial class MainWindow : INavigationWindow
 {
-    private readonly WindowService _windows;
+    private readonly IWindowService _windows;
     private readonly IContentDialogService _contentDialogService;
     private readonly ISnackbarService _snackbarService;
 
-    private readonly ThemeSettingsService _theme;
+    private readonly IThemeSettingsService _theme;
 
     public MainWindow(
         MainWindowViewModel viewModel,
@@ -24,8 +24,8 @@ public partial class MainWindow : INavigationWindow
         INavigationService navigationService,
         IContentDialogService contentDialogService,
         ISnackbarService snackbarService,
-        WindowService windows,
-        ThemeSettingsService theme)
+        IWindowService windows,
+        IThemeSettingsService theme)
     {
         ViewModel = viewModel;
         StatusViewModel = statusViewModel;

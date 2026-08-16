@@ -3,24 +3,24 @@ using AudioPresetSwitcher.Services;
 using NAudio.CoreAudioApi;
 using Wpf.Ui.Controls;
 
-namespace AudioPresetSwitcher.ViewModels;
+namespace AudioPresetSwitcher.ViewModels.Pages;
 
 public partial class PresetCardViewModel : ObservableObject
 {
-    private readonly AudioDeviceService _audio;
-    private readonly SettingsService _settings;
-    private readonly NotificationService _notifications;
+    private readonly IAudioDeviceService _audio;
+    private readonly ISettingsService _settings;
+    private readonly IPresetActivationService _activation;
 
     public PresetCardViewModel(
         AudioPreset preset,
-        AudioDeviceService audio,
-        SettingsService settings,
-        NotificationService notifications)
+        IAudioDeviceService audio,
+        ISettingsService settings,
+        IPresetActivationService activation)
     {
         Preset = preset;
         _audio = audio;
         _settings = settings;
-        _notifications = notifications;
+        _activation = activation;
         Refresh();
     }
 
@@ -43,10 +43,7 @@ public partial class PresetCardViewModel : ObservableObject
     [ObservableProperty]
     private bool _recordingFound = true;
 
-    public SymbolRegular IconSymbol =>
-        string.Equals(Preset.Icon, "Speaker", StringComparison.OrdinalIgnoreCase)
-            ? SymbolRegular.Speaker224
-            : SymbolRegular.HeadphonesSoundWave24;
+    public SymbolRegular IconSymbol => PresetIconGlyphs.ToSymbol(Preset.Icon);
 
     public void Refresh()
     {
@@ -70,13 +67,7 @@ public partial class PresetCardViewModel : ObservableObject
     [RelayCommand]
     private void Activate()
     {
-        var result = _audio.ActivatePreset(Preset);
-        if (result.AnySuccess)
-        {
-            _settings.Update(s => s.LastActivePresetId = Preset.Id);
-        }
-
-        _notifications.ShowPresetResult(result);
+        _activation.ActivateAndRemember(Preset);
         Refresh();
     }
 }

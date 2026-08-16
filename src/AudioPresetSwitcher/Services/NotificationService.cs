@@ -5,14 +5,14 @@ using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace AudioPresetSwitcher.Services;
 
-public sealed class NotificationService
+public sealed class NotificationService : INotificationService
 {
-    public const string AppUserModelId = "AudioPresetSwitcher.Desktop";
+    public const string AppUserModelId = AppIdentity.AppUserModelId;
 
-    private readonly SettingsService _settings;
+    private readonly ISettingsService _settings;
     private readonly ShortcutService _shortcuts;
 
-    public NotificationService(SettingsService settings, ShortcutService shortcuts)
+    public NotificationService(ISettingsService settings, ShortcutService shortcuts)
     {
         _settings = settings;
         _shortcuts = shortcuts;
@@ -23,7 +23,7 @@ public sealed class NotificationService
         try
         {
             NativeMethods.SetCurrentProcessExplicitAppUserModelID(AppUserModelId);
-            _shortcuts.EnsureStartMenuShortcut(AppUserModelId, "AudioPresetSwitcher");
+            _shortcuts.EnsureStartMenuShortcut(AppUserModelId, AppIdentity.Name);
         }
         catch
         {

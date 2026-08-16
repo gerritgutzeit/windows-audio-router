@@ -1,7 +1,6 @@
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using AudioPresetSwitcher.Models;
 using H.NotifyIcon;
 using H.NotifyIcon.Core;
@@ -10,23 +9,26 @@ namespace AudioPresetSwitcher.Services;
 
 public sealed class TrayService : IDisposable
 {
-    private readonly SettingsService _settings;
-    private readonly AudioDeviceService _audio;
-    private readonly NotificationService _notifications;
-    private readonly WindowService _windows;
+    private readonly ISettingsService _settings;
+    private readonly IAudioDeviceService _audio;
+    private readonly IPresetActivationService _activation;
+    private readonly INotificationService _notifications;
+    private readonly IWindowService _windows;
     private TaskbarIcon? _icon;
     private Icon? _trayIcon;
     private EventHandler? _settingsChangedHandler;
     private EventHandler<PresetActivationResult>? _presetActivatedHandler;
 
     public TrayService(
-        SettingsService settings,
-        AudioDeviceService audio,
-        NotificationService notifications,
-        WindowService windows)
+        ISettingsService settings,
+        IAudioDeviceService audio,
+        IPresetActivationService activation,
+        INotificationService notifications,
+        IWindowService windows)
     {
         _settings = settings;
         _audio = audio;
+        _activation = activation;
         _notifications = notifications;
         _windows = windows;
     }
@@ -39,7 +41,7 @@ public sealed class TrayService : IDisposable
             _trayIcon = LoadTrayIcon();
             _icon = new TaskbarIcon
             {
-                ToolTipText = "AudioPresetSwitcher",
+                ToolTipText = AppIdentity.Name,
                 Icon = _trayIcon,
                 NoLeftClickDelay = true,
                 MenuActivation = PopupActivationMode.RightClick,
@@ -59,7 +61,7 @@ public sealed class TrayService : IDisposable
         {
             try
             {
-                _notifications.Show("AudioPresetSwitcher", $"Tray icon failed: {ex.Message}");
+                _notifications.Show(AppIdentity.Name, $"Tray icon failed: {ex.Message}");
             }
             catch
             {
@@ -114,38 +116,9 @@ public sealed class TrayService : IDisposable
         void Build()
         {
             var menu = new ContextMenu();
-            var presets = _settings.Current.Presets;
-            if (presets.Count == 0)
-            {
-                menu.Items.Add(new MenuItem { Header = "No presets yet", IsEnabled = false });
-            }
-            else
-            {
-                foreach (var preset in presets)
-                {
-                    var item = new MenuItem
-                    {
-                        Header = preset.Name,
-                        IsCheckable = true,
-                        IsChecked = preset.Id == _settings.Current.LastActivePresetId,
-                        StaysOpenOnClick = false
-                    };
-                    var captured = preset;
-                    item.Click += (_, _) => Activate(captured);
-                    menu.Items.Add(item);
-                }
-            }
-
+            AddPresetItems(menu);
             menu.Items.Add(new Separator());
-
-            var settings = new MenuItem { Header = "Settings" };
-            settings.Click += (_, _) => _windows.ShowSettings();
-            menu.Items.Add(settings);
-
-            var exit = new MenuItem { Header = "Exit" };
-            exit.Click += (_, _) => _windows.Exit();
-            menu.Items.Add(exit);
-
+            AddFooterItems(menu);
             _icon.ContextMenu = menu;
         }
 
@@ -159,15 +132,44 @@ public sealed class TrayService : IDisposable
         }
     }
 
-    private void Activate(AudioPreset preset)
+    private void AddPresetItems(ContextMenu menu)
     {
-        var result = _audio.ActivatePreset(preset);
-        if (result.AnySuccess)
+        var presets = _settings.Current.Presets;
+        if (presets.Count == 0)
         {
-            _settings.Update(s => s.LastActivePresetId = preset.Id);
+            menu.Items.Add(new MenuItem { Header = "No presets yet", IsEnabled = false });
+            return;
         }
 
-        _notifications.ShowPresetResult(result);
+        foreach (var preset in presets)
+        {
+            var item = new MenuItem
+            {
+                Header = preset.Name,
+                IsCheckable = true,
+                IsChecked = preset.Id == _settings.Current.LastActivePresetId,
+                StaysOpenOnClick = false
+            };
+            var captured = preset;
+            item.Click += (_, _) => Activate(captured);
+            menu.Items.Add(item);
+        }
+    }
+
+    private void AddFooterItems(ContextMenu menu)
+    {
+        var settings = new MenuItem { Header = "Settings" };
+        settings.Click += (_, _) => _windows.ShowSettings();
+        menu.Items.Add(settings);
+
+        var exit = new MenuItem { Header = "Exit" };
+        exit.Click += (_, _) => _windows.Exit();
+        menu.Items.Add(exit);
+    }
+
+    private void Activate(AudioPreset preset)
+    {
+        _activation.ActivateAndRemember(preset);
         RebuildMenu();
     }
 }

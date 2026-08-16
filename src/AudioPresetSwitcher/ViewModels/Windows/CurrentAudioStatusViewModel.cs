@@ -1,5 +1,3 @@
-using System.Windows;
-using System.Windows.Threading;
 using AudioPresetSwitcher.Models;
 using AudioPresetSwitcher.Services;
 using AudioPresetSwitcher.Views.Pages;
@@ -11,21 +9,18 @@ namespace AudioPresetSwitcher.ViewModels.Windows;
 
 public partial class CurrentAudioStatusViewModel : ObservableObject, IDisposable
 {
-    private readonly AudioDeviceService _audio;
+    private readonly IAudioDeviceService _audio;
     private readonly INavigationService _navigation;
-    private readonly DispatcherTimer _timer;
+    private readonly LiveAudioMeterHost _meterHost;
 
-    public CurrentAudioStatusViewModel(AudioDeviceService audio, INavigationService navigation)
+    public CurrentAudioStatusViewModel(IAudioDeviceService audio, INavigationService navigation)
     {
         _audio = audio;
         _navigation = navigation;
         Playback = CurrentEndpointStatusViewModel.Missing(isPlayback: true);
         Recording = CurrentEndpointStatusViewModel.Missing(isPlayback: false);
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
-        _timer.Tick += (_, _) => RefreshPeaks();
-        _audio.DevicesChanged += OnDevicesChanged;
-        Reload();
-        _timer.Start();
+        _meterHost = new LiveAudioMeterHost(audio, Reload, RefreshPeaks);
+        _meterHost.Start();
     }
 
     [ObservableProperty]
@@ -37,16 +32,7 @@ public partial class CurrentAudioStatusViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void OpenLiveStatus() => _navigation.Navigate(typeof(DevicesPage));
 
-    public void Dispose()
-    {
-        _timer.Stop();
-        _audio.DevicesChanged -= OnDevicesChanged;
-    }
-
-    private void OnDevicesChanged(object? sender, EventArgs e)
-    {
-        Application.Current?.Dispatcher.BeginInvoke(Reload);
-    }
+    public void Dispose() => _meterHost.Dispose();
 
     private void Reload()
     {
@@ -71,7 +57,7 @@ public partial class CurrentAudioStatusViewModel : ObservableObject, IDisposable
             return;
         }
 
-        endpoint.Peak = _audio.GetPeak(endpoint.Id) * 100d;
+        endpoint.Peak = LiveAudioMeterHost.ToPercent(_audio.GetPeak(endpoint.Id));
     }
 
     private static CurrentEndpointStatusViewModel FromDevice(LiveDeviceInfo? info, bool isPlayback) =>
@@ -98,7 +84,7 @@ public partial class CurrentEndpointStatusViewModel : ObservableObject
         Name = info.FriendlyName,
         HasDevice = true,
         IsMuted = info.IsMuted,
-        Peak = info.Peak * 100d,
+        Peak = LiveAudioMeterHost.ToPercent(info.Peak),
         IconSymbol = info.Flow == DataFlow.Render ? SymbolRegular.Speaker224 : SymbolRegular.Mic24
     };
 

@@ -6,10 +6,10 @@ namespace AudioPresetSwitcher.ViewModels.Dialogs;
 
 public partial class PresetEditorViewModel : ObservableObject
 {
-    private readonly AudioDeviceService _audio;
+    private readonly IAudioDeviceService _audio;
     private bool _suppressKeywordSync;
 
-    public PresetEditorViewModel(AudioDeviceService audio)
+    public PresetEditorViewModel(IAudioDeviceService audio)
     {
         _audio = audio;
     }
@@ -18,7 +18,7 @@ public partial class PresetEditorViewModel : ObservableObject
     private string _name = "New preset";
 
     [ObservableProperty]
-    private string _icon = "Headphones";
+    private PresetIcon _icon = PresetIcon.Headphones;
 
     [ObservableProperty]
     private string _playbackKeyword = string.Empty;
@@ -38,7 +38,7 @@ public partial class PresetEditorViewModel : ObservableObject
     [ObservableProperty]
     private AudioDeviceInfo? _selectedRecordingDevice;
 
-    public string[] IconOptions { get; } = ["Headphones", "Speaker"];
+    public PresetIcon[] IconOptions { get; } = [PresetIcon.Headphones, PresetIcon.Speaker];
 
     public void LoadDevices(AudioPreset? existing)
     {

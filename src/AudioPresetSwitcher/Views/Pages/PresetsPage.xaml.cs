@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using AudioPresetSwitcher.ViewModels;
 using AudioPresetSwitcher.ViewModels.Pages;
 using Wpf.Ui.Abstractions.Controls;
 

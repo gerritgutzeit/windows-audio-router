@@ -28,7 +28,7 @@ public sealed class ShortcutService
 
     public string ResolveExecutablePath() =>
         Environment.ProcessPath
-        ?? Path.Combine(AppContext.BaseDirectory, "AudioPresetSwitcher.exe");
+        ?? Path.Combine(AppContext.BaseDirectory, AppIdentity.ExecutableFileName);
 
     public static string SanitizeFileName(string name)
     {

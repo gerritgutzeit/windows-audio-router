@@ -1,5 +1,3 @@
-using AudioPresetSwitcher.Models;
-
 namespace AudioPresetSwitcher.Models;
 
 public sealed class PresetActivationResult

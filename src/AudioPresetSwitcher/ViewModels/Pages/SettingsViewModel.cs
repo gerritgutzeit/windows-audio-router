@@ -5,15 +5,15 @@ namespace AudioPresetSwitcher.ViewModels.Pages;
 
 public partial class SettingsViewModel : ObservableObject
 {
-    private readonly SettingsService _settings;
-    private readonly ThemeSettingsService _theme;
+    private readonly ISettingsService _settings;
+    private readonly IThemeSettingsService _theme;
     private readonly StartupService _startup;
     private readonly UpdateService _updates;
     private bool _suppress;
 
     public SettingsViewModel(
-        SettingsService settings,
-        ThemeSettingsService theme,
+        ISettingsService settings,
+        IThemeSettingsService theme,
         StartupService startup,
         UpdateService updates)
     {
@@ -21,11 +21,11 @@ public partial class SettingsViewModel : ObservableObject
         _theme = theme;
         _startup = startup;
         _updates = updates;
-        ThemeOptions = ["System", "Dark", "Light"];
+        ThemeOptions = [AppThemeMode.System, AppThemeMode.Dark, AppThemeMode.Light];
         Load();
     }
 
-    public string[] ThemeOptions { get; }
+    public AppThemeMode[] ThemeOptions { get; }
 
     [ObservableProperty]
     private bool _runAtStartup;
@@ -34,7 +34,7 @@ public partial class SettingsViewModel : ObservableObject
     private bool _showToastNotifications;
 
     [ObservableProperty]
-    private string _selectedTheme = "System";
+    private AppThemeMode _selectedTheme = AppThemeMode.System;
 
     [ObservableProperty]
     private string _versionText = "";
@@ -72,21 +72,15 @@ public partial class SettingsViewModel : ObservableObject
         _settings.Update(s => s.ShowToastNotifications = value);
     }
 
-    partial void OnSelectedThemeChanged(string value)
+    partial void OnSelectedThemeChanged(AppThemeMode value)
     {
         if (_suppress)
         {
             return;
         }
 
-        var mode = value switch
-        {
-            "Dark" => AppThemeMode.Dark,
-            "Light" => AppThemeMode.Light,
-            _ => AppThemeMode.System
-        };
-        _settings.Update(s => s.Theme = mode);
-        _theme.Apply(mode);
+        _settings.Update(s => s.Theme = value);
+        _theme.Apply(value);
     }
 
     [RelayCommand]
@@ -134,12 +128,7 @@ public partial class SettingsViewModel : ObservableObject
         }
 
         ShowToastNotifications = _settings.Current.ShowToastNotifications;
-        SelectedTheme = _settings.Current.Theme switch
-        {
-            AppThemeMode.Dark => "Dark",
-            AppThemeMode.Light => "Light",
-            _ => "System"
-        };
+        SelectedTheme = _settings.Current.Theme;
         _suppress = false;
         RefreshUpdateState();
     }

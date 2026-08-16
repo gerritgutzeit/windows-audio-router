@@ -6,7 +6,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:converters="clr-namespace:AudioPresetSwitcher.Converters"
-    xmlns:vm="clr-namespace:AudioPresetSwitcher.ViewModels"
     xmlns:pages="clr-namespace:AudioPresetSwitcher.ViewModels.Pages"
     d:DataContext="{d:DesignInstance pages:PresetsViewModel}"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
@@ -56,7 +55,7 @@
 
                 <ItemsControl ItemsSource="{Binding ViewModel.Presets}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:PresetCardViewModel}">
+                        <DataTemplate DataType="{x:Type pages:PresetCardViewModel}">
                             <ui:Card Margin="0,0,0,12" Padding="18">
                                 <Grid>
                                     <Grid.ColumnDefinitions>

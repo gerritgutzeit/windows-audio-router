@@ -6,9 +6,9 @@ namespace AudioPresetSwitcher.ViewModels.Windows;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public MainWindowViewModel(WindowService windows)
+    public MainWindowViewModel(IWindowService windows)
     {
-        ApplicationTitle = "AudioPresetSwitcher";
+        ApplicationTitle = AppIdentity.Name;
 
         MenuItems =
         [
@@ -18,6 +18,7 @@ public partial class MainWindowViewModel : ObservableObject
                 Icon = new SymbolIcon { Symbol = SymbolRegular.HeadphonesSoundWave24 },
                 TargetPageType = typeof(PresetsPage)
             },
+            // Nav label "Live Status"; page type remains DevicesPage (routes/DI unchanged).
             new NavigationViewItem
             {
                 Content = "Live Status",
@@ -44,11 +45,11 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string _applicationTitle = "AudioPresetSwitcher";
+    private string _applicationTitle = AppIdentity.Name;
 
     [ObservableProperty]
-    private ObservableCollection<object> _menuItems = [];
+    private ObservableCollection<NavigationViewItem> _menuItems = [];
 
     [ObservableProperty]
-    private ObservableCollection<object> _footerMenuItems = [];
+    private ObservableCollection<NavigationViewItem> _footerMenuItems = [];
 }

@@ -11,24 +11,24 @@ namespace AudioPresetSwitcher.ViewModels.Pages;
 
 public partial class PresetsViewModel : ObservableObject
 {
-    private readonly SettingsService _settings;
-    private readonly AudioDeviceService _audio;
-    private readonly NotificationService _notifications;
+    private readonly ISettingsService _settings;
+    private readonly IAudioDeviceService _audio;
+    private readonly IPresetActivationService _activation;
     private readonly ShortcutService _shortcuts;
     private readonly IContentDialogService _dialogs;
     private readonly ISnackbarService _snackbar;
 
     public PresetsViewModel(
-        SettingsService settings,
-        AudioDeviceService audio,
-        NotificationService notifications,
+        ISettingsService settings,
+        IAudioDeviceService audio,
+        IPresetActivationService activation,
         ShortcutService shortcuts,
         IContentDialogService dialogs,
         ISnackbarService snackbar)
     {
         _settings = settings;
         _audio = audio;
-        _notifications = notifications;
+        _activation = activation;
         _shortcuts = shortcuts;
         _dialogs = dialogs;
         _snackbar = snackbar;
@@ -45,10 +45,8 @@ public partial class PresetsViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasPresets;
 
-    public async Task CreateAsync() => await EditAsync(null);
-
     [RelayCommand]
-    private async Task Create() => await CreateAsync();
+    private async Task Create() => await EditAsync(null);
 
     [RelayCommand]
     private async Task Edit(PresetCardViewModel? card)
@@ -116,18 +114,7 @@ public partial class PresetsViewModel : ObservableObject
             return;
         }
 
-        var fileName = ShortcutService.SanitizeFileName(card.Name);
-        var dialog = new SaveFileDialog
-        {
-            Title = "Create shortcut",
-            Filter = "Shortcut (*.lnk)|*.lnk",
-            DefaultExt = ".lnk",
-            AddExtension = true,
-            FileName = fileName,
-            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-            OverwritePrompt = true
-        };
-
+        var dialog = CreateShortcutSaveDialog(card.Name);
         if (dialog.ShowDialog() != true)
         {
             return;
@@ -135,64 +122,21 @@ public partial class PresetsViewModel : ObservableObject
 
         try
         {
-            var exe = _shortcuts.ResolveExecutablePath();
-            if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe))
-            {
-                _snackbar.Show(
-                    "Could not create shortcut",
-                    "Application executable was not found.",
-                    ControlAppearance.Caution,
-                    null,
-                    TimeSpan.FromSeconds(4));
-                return;
-            }
-
-            var path = dialog.FileName;
-            if (!path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
-            {
-                path += ".lnk";
-            }
-
-            _shortcuts.CreateShortcut(
-                path,
-                exe,
-                ShortcutService.FormatPresetArguments(card.Preset.Name),
-                $"Activate preset \"{card.Preset.Name}\"");
-
-            _snackbar.Show(
-                "Shortcut created",
-                Path.GetFileName(path),
-                ControlAppearance.Success,
-                null,
-                TimeSpan.FromSeconds(3));
+            WriteShortcutFile(dialog.FileName, card.Preset);
         }
         catch (Exception ex)
         {
-            _snackbar.Show(
-                "Could not create shortcut",
-                ex.Message,
-                ControlAppearance.Caution,
-                null,
-                TimeSpan.FromSeconds(4));
+            ShowCaution("Could not create shortcut", ex.Message);
         }
     }
 
     private async Task EditAsync(AudioPreset? existing)
     {
-        var editor = new PresetEditorViewModel(_audio)
-        {
-            Name = existing?.Name ?? "New preset",
-            PlaybackKeyword = existing?.PlaybackKeyword ?? string.Empty,
-            RecordingKeyword = existing?.RecordingKeyword ?? string.Empty,
-            Icon = existing?.Icon ?? "Headphones"
-        };
-        editor.LoadDevices(existing);
-
-        var view = new PresetEditorView { DataContext = editor };
+        var editor = CreateEditor(existing);
         var dialog = new ContentDialog
         {
             Title = existing is null ? "New preset" : "Edit preset",
-            Content = view,
+            Content = new PresetEditorView { DataContext = editor },
             PrimaryButtonText = "Save",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
@@ -206,36 +150,97 @@ public partial class PresetsViewModel : ObservableObject
 
         if (!editor.TryBuild(existing?.Id ?? Guid.NewGuid(), out var preset, out var error))
         {
-            _snackbar.Show("Could not save preset", error, ControlAppearance.Caution, null, TimeSpan.FromSeconds(4));
+            ShowCaution("Could not save preset", error);
             return;
         }
 
+        SavePreset(existing, preset);
+    }
+
+    private PresetEditorViewModel CreateEditor(AudioPreset? existing)
+    {
+        var editor = new PresetEditorViewModel(_audio)
+        {
+            Name = existing?.Name ?? "New preset",
+            PlaybackKeyword = existing?.PlaybackKeyword ?? string.Empty,
+            RecordingKeyword = existing?.RecordingKeyword ?? string.Empty,
+            Icon = existing?.Icon ?? PresetIcon.Headphones
+        };
+        editor.LoadDevices(existing);
+        return editor;
+    }
+
+    private void SavePreset(AudioPreset? existing, AudioPreset preset)
+    {
         _settings.Update(s =>
         {
             if (existing is null)
             {
                 s.Presets.Add(preset);
+                return;
+            }
+
+            var index = s.Presets.FindIndex(p => p.Id == existing.Id);
+            if (index >= 0)
+            {
+                s.Presets[index] = preset;
             }
             else
             {
-                var index = s.Presets.FindIndex(p => p.Id == existing.Id);
-                if (index >= 0)
-                {
-                    s.Presets[index] = preset;
-                }
-                else
-                {
-                    s.Presets.Add(preset);
-                }
+                s.Presets.Add(preset);
             }
         });
     }
+
+    private static SaveFileDialog CreateShortcutSaveDialog(string presetName) =>
+        new()
+        {
+            Title = "Create shortcut",
+            Filter = "Shortcut (*.lnk)|*.lnk",
+            DefaultExt = ".lnk",
+            AddExtension = true,
+            FileName = ShortcutService.SanitizeFileName(presetName),
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+            OverwritePrompt = true
+        };
+
+    private void WriteShortcutFile(string selectedPath, AudioPreset preset)
+    {
+        var exe = _shortcuts.ResolveExecutablePath();
+        if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe))
+        {
+            ShowCaution("Could not create shortcut", "Application executable was not found.");
+            return;
+        }
+
+        var path = selectedPath;
+        if (!path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
+        {
+            path += ".lnk";
+        }
+
+        _shortcuts.CreateShortcut(
+            path,
+            exe,
+            ShortcutService.FormatPresetArguments(preset.Name),
+            $"Activate preset \"{preset.Name}\"");
+
+        _snackbar.Show(
+            "Shortcut created",
+            Path.GetFileName(path),
+            ControlAppearance.Success,
+            null,
+            TimeSpan.FromSeconds(3));
+    }
+
+    private void ShowCaution(string title, string message) =>
+        _snackbar.Show(title, message, ControlAppearance.Caution, null, TimeSpan.FromSeconds(4));
 
     private void Reload()
     {
         Presets = new ObservableCollection<PresetCardViewModel>(
             _settings.Current.Presets.Select(preset =>
-                new PresetCardViewModel(preset, _audio, _settings, _notifications)));
+                new PresetCardViewModel(preset, _audio, _settings, _activation)));
         HasPresets = Presets.Count > 0;
     }
 }

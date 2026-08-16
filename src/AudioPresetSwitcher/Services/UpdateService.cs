@@ -10,6 +10,8 @@ namespace AudioPresetSwitcher.Services;
 public sealed class UpdateService
 {
     private const string RepoUrl = "https://github.com/gerritgutzeit/windows-audio-router";
+    private const string UpdateReadyTitle = "Update ready";
+    private const string UpdateReadyMessage = "Restart from Settings to install the new version.";
 
     private readonly ISnackbarService _snackbar;
     private readonly UpdateManager _manager;
@@ -51,10 +53,7 @@ public sealed class UpdateService
             var ready = await CheckAndDownloadAsync(showStatus: false, cancellationToken);
             if (ready)
             {
-                await ShowSnackbarAsync(
-                    "Update ready",
-                    "Restart from Settings to install the new version.",
-                    ControlAppearance.Info);
+                await ShowUpdateReadyAsync();
             }
         }
         catch
@@ -81,14 +80,11 @@ public sealed class UpdateService
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            if (_manager.UpdatePendingRestart is not null || _pending is not null)
+            if (HasPendingUpdate())
             {
                 if (showStatus)
                 {
-                    await ShowSnackbarAsync(
-                        "Update ready",
-                        "Restart from Settings to install the new version.",
-                        ControlAppearance.Info);
+                    await ShowUpdateReadyAsync();
                 }
 
                 return true;
@@ -121,10 +117,7 @@ public sealed class UpdateService
 
             if (showStatus)
             {
-                await ShowSnackbarAsync(
-                    "Update ready",
-                    "Restart from Settings to install the new version.",
-                    ControlAppearance.Info);
+                await ShowUpdateReadyAsync();
             }
 
             return true;
@@ -145,6 +138,12 @@ public sealed class UpdateService
         var asset = _pending?.TargetFullRelease ?? _manager.UpdatePendingRestart;
         _manager.ApplyUpdatesAndRestart(asset);
     }
+
+    private bool HasPendingUpdate() =>
+        _manager.UpdatePendingRestart is not null || _pending is not null;
+
+    private Task ShowUpdateReadyAsync() =>
+        ShowSnackbarAsync(UpdateReadyTitle, UpdateReadyMessage, ControlAppearance.Info);
 
     private Task ShowSnackbarAsync(string title, string message, ControlAppearance appearance)
     {

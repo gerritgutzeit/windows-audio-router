@@ -6,7 +6,7 @@ namespace AudioPresetSwitcher.Services;
 public sealed class StartupService
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "AudioPresetSwitcher";
+    private const string ValueName = AppIdentity.Name;
     private const string TrayArgument = "--tray";
 
     public bool IsEnabled()
@@ -48,7 +48,7 @@ public sealed class StartupService
             var root = VelopackLocator.Current.RootAppDir;
             if (!string.IsNullOrWhiteSpace(root))
             {
-                var stub = Path.Combine(root, "AudioPresetSwitcher.exe");
+                var stub = Path.Combine(root, AppIdentity.ExecutableFileName);
                 if (File.Exists(stub))
                 {
                     return $"\"{stub}\" {TrayArgument}";
@@ -62,7 +62,7 @@ public sealed class StartupService
             }
         }
 
-        var exe = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "AudioPresetSwitcher.exe");
+        var exe = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, AppIdentity.ExecutableFileName);
         return $"\"{exe}\" {TrayArgument}";
     }
 }

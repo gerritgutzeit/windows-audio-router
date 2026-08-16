@@ -10,8 +10,8 @@ namespace AudioPresetSwitcher.Services;
 
 public sealed class IpcService : IHostedService, IDisposable
 {
-    public const string PipeName = "AudioPresetSwitcher.ipc";
-    public const string MutexName = @"Local\AudioPresetSwitcher";
+    public const string PipeName = AppIdentity.PipeName;
+    public const string MutexName = AppIdentity.MutexName;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -19,22 +19,16 @@ public sealed class IpcService : IHostedService, IDisposable
         PropertyNameCaseInsensitive = true
     };
 
-    private readonly SettingsService _settings;
-    private readonly AudioDeviceService _audio;
-    private readonly NotificationService _notifications;
-    private readonly WindowService _windows;
+    private readonly IPresetActivationService _activation;
+    private readonly IWindowService _windows;
     private CancellationTokenSource? _cts;
     private Task? _listenTask;
 
     public IpcService(
-        SettingsService settings,
-        AudioDeviceService audio,
-        NotificationService notifications,
-        WindowService windows)
+        IPresetActivationService activation,
+        IWindowService windows)
     {
-        _settings = settings;
-        _audio = audio;
-        _notifications = notifications;
+        _activation = activation;
         _windows = windows;
     }
 
@@ -100,18 +94,12 @@ public sealed class IpcService : IHostedService, IDisposable
             return new IpcResponse { Ok = true, Message = "Opened dashboard", ExitCode = 0 };
         }
 
-        var result = ActivateFromRequest(request.Preset, request.PresetIndex);
+        var result = _activation.ActivateFromRequest(request.Preset, request.PresetIndex);
         if (result is null)
         {
             return new IpcResponse { Ok = false, Message = "Preset not found", ExitCode = 1 };
         }
 
-        if (result.AnySuccess)
-        {
-            _settings.Update(s => s.LastActivePresetId = result.Preset.Id);
-        }
-
-        _notifications.ShowPresetResult(result);
         if (request.Show)
         {
             _windows.ShowDashboard();
@@ -123,22 +111,6 @@ public sealed class IpcService : IHostedService, IDisposable
             Message = result.Summary,
             ExitCode = result.AnySuccess ? 0 : 1
         };
-    }
-
-    public PresetActivationResult? ActivateFromRequest(string? name, int? index)
-    {
-        AudioPreset? preset = null;
-        var presets = _settings.Current.Presets;
-        if (!string.IsNullOrWhiteSpace(name))
-        {
-            preset = presets.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        }
-        else if (index is >= 0 && index.Value < presets.Count)
-        {
-            preset = presets[index.Value];
-        }
-
-        return preset is null ? null : _audio.ActivatePreset(preset);
     }
 
     private async Task ListenAsync(CancellationToken token)

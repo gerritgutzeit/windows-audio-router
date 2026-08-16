@@ -1,4 +1,5 @@
 using AudioPresetSwitcher.Models;
+using AudioPresetSwitcher.ViewModels;
 using NAudio.CoreAudioApi;
 using Wpf.Ui.Controls;
 
@@ -13,9 +14,9 @@ public partial class LiveDeviceCardViewModel : ObservableObject
         IsPlayback = info.Flow == DataFlow.Render;
         IsDefaultMultimedia = info.IsDefaultMultimedia;
         IsDefaultCommunications = info.IsDefaultCommunications;
-        VolumePercent = info.IsMuted ? 0 : Math.Round(info.Volume * 100);
+        VolumePercent = info.IsMuted ? 0 : Math.Round(LiveAudioMeterHost.ToPercent(info.Volume));
         IsMuted = info.IsMuted;
-        Peak = info.Peak * 100d;
+        Peak = LiveAudioMeterHost.ToPercent(info.Peak);
         StatusText = info.IsMuted ? "Muted" : $"Volume {VolumePercent:0}%";
         IconSymbol = IsPlayback ? SymbolRegular.Speaker224 : SymbolRegular.Mic24;
     }
