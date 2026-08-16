@@ -15,6 +15,8 @@ public partial class MainWindow : INavigationWindow
     private readonly IContentDialogService _contentDialogService;
     private readonly ISnackbarService _snackbarService;
 
+    private readonly ThemeSettingsService _theme;
+
     public MainWindow(
         MainWindowViewModel viewModel,
         CurrentAudioStatusViewModel statusViewModel,
@@ -22,7 +24,8 @@ public partial class MainWindow : INavigationWindow
         INavigationService navigationService,
         IContentDialogService contentDialogService,
         ISnackbarService snackbarService,
-        WindowService windows)
+        WindowService windows,
+        ThemeSettingsService theme)
     {
         ViewModel = viewModel;
         StatusViewModel = statusViewModel;
@@ -30,6 +33,7 @@ public partial class MainWindow : INavigationWindow
         _windows = windows;
         _contentDialogService = contentDialogService;
         _snackbarService = snackbarService;
+        _theme = theme;
 
         // Keep studio brass; ThemeSettingsService re-applies accent on theme changes.
         SystemThemeWatcher.Watch(this, WindowBackdropType.Mica, updateAccents: false);
@@ -47,6 +51,7 @@ public partial class MainWindow : INavigationWindow
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= OnLoaded;
+        _theme.Refresh();
         _ = Navigate(typeof(PresetsPage));
     }
 
