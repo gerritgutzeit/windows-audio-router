@@ -33,21 +33,56 @@ export function Hero() {
     const el = videoRef.current
     if (!el || videoFailed) return
 
-    if (reduceMotion) {
-      el.pause()
-      return
+    el.muted = true
+    el.defaultMuted = true
+    el.playsInline = true
+    el.loop = true
+
+    const tryPlay = () => {
+      if (reduceMotion) {
+        el.pause()
+        return
+      }
+      void el.play().catch(() => undefined)
     }
 
-    const play = () => {
-      void el.play().catch(() => {
-        // Autoplay blocked is fine — muted loop usually retries on interaction
-      })
+    // Some MP4s don't loop cleanly — restart manually
+    const onEnded = () => {
+      el.currentTime = 0
+      tryPlay()
     }
 
-    if (el.readyState >= 2) play()
-    else el.addEventListener('canplay', play, { once: true })
+    // Resume if the browser pauses while the hero is still on screen
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') tryPlay()
+    }
 
-    return () => el.removeEventListener('canplay', play)
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry) return
+        if (entry.isIntersecting) tryPlay()
+        else el.pause()
+      },
+      { threshold: 0.2 },
+    )
+
+    el.addEventListener('ended', onEnded)
+    document.addEventListener('visibilitychange', onVisibility)
+    observer.observe(el)
+
+    if (el.readyState >= 2) tryPlay()
+    else {
+      el.addEventListener('canplay', tryPlay, { once: true })
+      el.addEventListener('loadeddata', tryPlay, { once: true })
+    }
+
+    return () => {
+      el.removeEventListener('ended', onEnded)
+      el.removeEventListener('canplay', tryPlay)
+      el.removeEventListener('loadeddata', tryPlay)
+      document.removeEventListener('visibilitychange', onVisibility)
+      observer.disconnect()
+    }
   }, [reduceMotion, videoFailed])
 
   return (
@@ -71,15 +106,15 @@ export function Hero() {
               <video
                 ref={videoRef}
                 className="absolute inset-0 h-full w-full object-cover object-center"
+                src={VIDEO_SRC}
                 autoPlay
                 muted
                 loop
                 playsInline
-                preload="metadata"
+                preload="auto"
+                disablePictureInPicture
                 onError={() => setVideoFailed(true)}
-              >
-                <source src={VIDEO_SRC} type="video/mp4" />
-              </video>
+              />
             )}
             {/* Keep left open for video; shade the copy side */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-void/35 to-void/85" />
