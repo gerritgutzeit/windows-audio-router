@@ -1,21 +1,19 @@
-import { CliTerminal } from './components/CliTerminal'
-import { FeatureBento } from './components/FeatureBento'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
-import { SpecsTable } from './components/SpecsTable'
-import { ValueProps } from './components/ValueProps'
+import { LiveStage } from './components/LiveStage'
+import { ProductStage } from './components/ProductStage'
+import { StageRail } from './components/StageRail'
 
 export default function App() {
   return (
-    <div id="top" className="min-h-screen">
+    <div className="min-h-screen bg-void">
       <Header />
+      <StageRail />
       <main>
         <Hero />
-        <ValueProps />
-        <FeatureBento />
-        <CliTerminal />
-        <SpecsTable />
+        <ProductStage />
+        <LiveStage />
       </main>
       <Footer />
     </div>

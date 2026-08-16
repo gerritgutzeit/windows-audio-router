@@ -3,18 +3,15 @@ export const RELEASES_URL = `${REPO_URL}/releases/latest`
 export const DOWNLOAD_URL = `${REPO_URL}/releases/latest/download/AudioPresetSwitcher-win-Setup.exe`
 export const SITE_URL = 'https://gerritgutzeit.github.io/windows-audio-router/'
 
-export const CLI_SNIPPET = `# Activate preset by name
-AudioPresetSwitcher.exe --preset "Desk Studio"
-
-# Short flag
-AudioPresetSwitcher.exe -p "Desk Studio"
-
-# Activate by zero-based index
-AudioPresetSwitcher.exe --preset-index 0`
-
 export const NAV_LINKS = [
-  { label: 'Presets', href: '#presets' },
-  { label: 'Live Monitor', href: '#live-monitor' },
-  { label: 'Automation', href: '#automation' },
-  { label: 'Docs', href: '#docs' },
+  { label: 'Product', href: '#product' },
+  { label: 'Live', href: '#live' },
+  { label: 'Get it', href: '#get' },
+] as const
+
+export const STAGES = [
+  { id: 'top', label: 'Start' },
+  { id: 'product', label: 'Product' },
+  { id: 'live', label: 'Live' },
+  { id: 'get', label: 'Get it' },
 ] as const

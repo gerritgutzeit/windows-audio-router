@@ -21,13 +21,14 @@ public sealed class ApplicationHostService(
     public Task StartAsync(CancellationToken cancellationToken)
     {
         notifications.Initialize();
-        theme.Apply(settings.Current.Theme);
         if (settings.Current.RunAtStartup != startup.IsEnabled())
         {
             settings.Update(s => s.RunAtStartup = startup.IsEnabled());
         }
 
         var window = services.GetRequiredService<MainWindow>();
+        // Re-apply after MainWindow: SystemThemeWatcher.Watch may ApplySystemTheme on first watch.
+        theme.Apply(settings.Current.Theme);
         windows.Attach(window);
         tray.Initialize();
 

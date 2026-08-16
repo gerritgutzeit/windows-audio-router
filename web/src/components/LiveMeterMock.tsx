@@ -1,55 +1,101 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { useMemo } from 'react'
+import { Headphones, Mic, type LucideIcon } from 'lucide-react'
 
-type LiveMeterMockProps = {
-  bars?: number
+type DeviceMeterRowProps = {
+  icon: LucideIcon
+  label: string
+  device: string
+  /** Base activity 0–1 for the animated fill */
+  activity?: number
   className?: string
-  active?: boolean
 }
 
-export function LiveMeterMock({
-  bars = 24,
-  className = '',
+function AnimatedLevelBar({
+  activity = 0.35,
   active = true,
-}: LiveMeterMockProps) {
+}: {
+  activity?: number
+  active?: boolean
+}) {
   const reduceMotion = useReducedMotion()
-  const seeds = useMemo(
-    () => Array.from({ length: bars }, (_, i) => 0.25 + ((i * 17) % 60) / 100),
-    [bars],
-  )
+  const base = Math.max(0.06, Math.min(0.92, activity))
 
   return (
     <div
-      className={`flex h-16 items-end gap-0.5 sm:gap-1 ${className}`}
+      className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#2e2e30]"
       role="img"
-      aria-label="Simulated live audio peak meters"
+      aria-label="Simulated live audio level"
     >
-      {seeds.map((seed, i) => (
-        <motion.div
-          key={i}
-          className="w-1 flex-1 rounded-t-sm bg-gradient-to-t from-accent to-accent-bright sm:w-1.5"
-          initial={{ height: `${seed * 40}%` }}
-          animate={
-            active && !reduceMotion
-              ? {
-                  height: [
-                    `${seed * 35}%`,
-                    `${Math.min(100, seed * 100 + 40)}%`,
-                    `${seed * 55}%`,
-                    `${Math.min(95, seed * 80 + 20)}%`,
-                    `${seed * 35}%`,
-                  ],
-                }
-              : { height: `${seed * 50}%` }
-          }
-          transition={{
-            duration: 1.4 + (i % 5) * 0.15,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: (i % 8) * 0.05,
-          }}
-        />
-      ))}
+      <motion.div
+        className="h-full rounded-full bg-accent-bright"
+        initial={{ width: `${base * 28}%` }}
+        animate={
+          active && !reduceMotion
+            ? {
+                width: [
+                  `${base * 18}%`,
+                  `${Math.min(95, base * 100 + 22)}%`,
+                  `${base * 42}%`,
+                  `${Math.min(88, base * 75 + 12)}%`,
+                  `${base * 18}%`,
+                ],
+              }
+            : { width: `${base * 40}%` }
+        }
+        transition={{
+          duration: 1.55 + base * 0.4,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+    </div>
+  )
+}
+
+export function DeviceMeterRow({
+  icon: Icon,
+  label,
+  device,
+  activity = 0.35,
+  className = '',
+}: DeviceMeterRowProps) {
+  return (
+    <div className={`flex items-start gap-3 ${className}`}>
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#222224]">
+        <Icon className="h-4 w-4 text-[#f0eeea]" strokeWidth={1.75} aria-hidden />
+      </div>
+      <div className="min-w-0 flex-1 pt-0.5">
+        <p className="text-xs text-[#8a8680]">{label}</p>
+        <p className="truncate text-sm font-semibold text-white">{device}</p>
+        <AnimatedLevelBar activity={activity} />
+      </div>
+    </div>
+  )
+}
+
+type LiveStatusCardProps = {
+  className?: string
+}
+
+export function LiveStatusCard({ className = '' }: LiveStatusCardProps) {
+  return (
+    <div
+      className={`rounded-xl bg-[#141416] p-4 ${className}`}
+      aria-label="Live device status with meters"
+    >
+      <DeviceMeterRow
+        icon={Headphones}
+        label="Headphones"
+        device="Kopfhörer (AirPods Max)"
+        activity={0.28}
+      />
+      <DeviceMeterRow
+        className="mt-4"
+        icon={Mic}
+        label="Microphone"
+        device="Microphone (4- Shure MV7)"
+        activity={0.55}
+      />
     </div>
   )
 }

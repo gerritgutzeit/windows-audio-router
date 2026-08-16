@@ -31,7 +31,8 @@ public partial class MainWindow : INavigationWindow
         _contentDialogService = contentDialogService;
         _snackbarService = snackbarService;
 
-        SystemThemeWatcher.Watch(this);
+        // Keep studio brass; ThemeSettingsService re-applies accent on theme changes.
+        SystemThemeWatcher.Watch(this, WindowBackdropType.Mica, updateAccents: false);
         InitializeComponent();
         CurrentAudioStatus.DataContext = StatusViewModel;
         SetPageService(navigationViewPageProvider);

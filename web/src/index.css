@@ -10,15 +10,21 @@
 
 @theme {
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --color-void: #090a0c;
-  --color-void-elevated: #0f1115;
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-text: #ffffff;
-  --color-muted: #9a9fa5;
-  --color-accent: #0088ff;
-  --color-accent-bright: #00d2ff;
-  --color-border: rgba(255, 255, 255, 0.08);
+
+  /* Rack / brushed metal vibe */
+  --color-void: #080809;
+  --color-void-elevated: #101012;
+  --color-metal: #161618;
+  --color-gunmetal: #2a2a2c;
+  --color-surface: rgba(255, 248, 236, 0.035);
+  --color-text: #f0eeea;
+  --color-muted: #8a8680;
+  --color-silver: #c8c4bc;
+  --color-accent: #b59a6d;
+  --color-accent-bright: #d4bc8c;
+  --color-border: rgba(255, 248, 236, 0.09);
 }
 
 @layer base {
@@ -31,15 +37,14 @@
     min-height: 100vh;
     font-family: var(--font-sans);
     color: var(--color-text);
-    background: linear-gradient(180deg, var(--color-void) 0%, var(--color-void-elevated) 100%);
-    background-attachment: fixed;
+    background: var(--color-void);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--color-accent) 40%, transparent);
-    color: white;
+    background: color-mix(in srgb, var(--color-accent) 45%, transparent);
+    color: #0c0c0d;
   }
 
   :focus-visible {
@@ -51,8 +56,8 @@
 @layer utilities {
   .glass {
     background: var(--color-surface);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(18px) saturate(1.05);
+    -webkit-backdrop-filter: blur(18px) saturate(1.05);
     border: 1px solid var(--color-border);
   }
 
@@ -62,8 +67,69 @@
 
   .glow-accent {
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent),
-      0 0 24px color-mix(in srgb, var(--color-accent) 35%, transparent),
-      0 0 48px color-mix(in srgb, var(--color-accent) 15%, transparent);
+      0 0 0 1px color-mix(in srgb, var(--color-accent) 40%, transparent),
+      0 10px 36px color-mix(in srgb, var(--color-accent) 28%, transparent),
+      0 0 48px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+
+  .metal-panel {
+    background:
+      linear-gradient(165deg, rgba(255, 248, 236, 0.06) 0%, transparent 45%),
+      linear-gradient(180deg, #242426 0%, #161618 55%, #101012 100%);
+    border: 1px solid rgba(181, 154, 109, 0.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 248, 236, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+      0 18px 48px rgba(0, 0, 0, 0.5);
+  }
+
+  .brushed-metal {
+    background-color: #121214;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 248, 236, 0.02) 0px,
+        rgba(255, 248, 236, 0.02) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      linear-gradient(180deg, #1c1c1e 0%, #0e0e10 100%);
+  }
+
+  .dot-grid {
+    background-image: radial-gradient(rgba(255, 248, 236, 0.09) 0.55px, transparent 0.55px);
+    background-size: 10px 10px;
+  }
+
+  .title-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    color: #f2f0eb;
+    text-wrap: pretty;
+  }
+
+  .stage-shell {
+    position: relative;
+  }
+
+  .stage-pin {
+    position: sticky;
+    top: 0;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+  }
+
+  .app-icon {
+    display: block;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.6));
+  }
+
+  .app-icon-sm {
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
   }
 }
